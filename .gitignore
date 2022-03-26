@@ -1,0 +1,8 @@
+out
+.idea
+src/com/snakefeather/test
+src/com/snakefeather/filemanager/snakefeather
+src/mysql.properties
+FileManager.iml
+log4j-api-2.3.jar
+log4j-core-2.3.jar

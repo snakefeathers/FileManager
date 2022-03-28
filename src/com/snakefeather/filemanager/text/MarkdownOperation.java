@@ -4,6 +4,7 @@ import com.snakefeather.filemanager.file.FileOperation;
 import com.snakefeather.filemanager.function.LineTextFind;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -16,33 +17,18 @@ public class MarkdownOperation {
      */
     private String REGEX_PHOTOURL = ".*\\!\\[(?<remark>.*)\\]\\((?<filePath>.*[\\/]{1,2}(?<fileName>[^\\/.]+[.](png)|(jpg)))\\)";
 
+
+    //#region  图片链接处理
     private static boolean isCodeChunk = true;
-    // 筛选出图片链接
-    private LineTextFind PHOTOFIND = textLine -> {
-        if (textLine.matches(".{3,3}.*")){
+    //  图片链接筛选器  变量  一个函数
+    private LineTextFind FUNCTION_PHOTOFIND = textLine -> {
+        if (textLine.matches(".{3,3}.*")) {
             isCodeChunk = !isCodeChunk;
         }
-        if (isCodeChunk)return false;
+        if (isCodeChunk) return false;  // 最原始的方法，跳过代码块。
         return Pattern.compile(REGEX_PHOTOURL).matcher(textLine).matches();
     };
 
-
-    /**
-     * 传入具体文件的路径，根据正则表达式，筛选出图片链接。
-     *
-     * @param filePath 文件正则
-     * @return 符合条件的文本列表
-     * @throws IOException
-     */
-    public List<String> getPhotoUrlList(String filePath) throws IOException {
-        List<String> list = new ArrayList<>();
-        // 筛选行语句  // 添加到list中。
-        FileOperation.lineTextFindOperation(filePath, PHOTOFIND, lineText -> {
-            list.add(lineText);
-            return "";
-        });
-        return list;
-    }
 
     /**
      * 传入具体文件的路径，筛选出文件的图片链接，之后转为"文件名+原文本"的map。
@@ -52,75 +38,87 @@ public class MarkdownOperation {
      * @throws IOException
      */
     public Map<String, String> getPhotoUrlMap(String filePath) throws IOException {
-        List<String> urlList = getPhotoUrlList(filePath);
+        List<String> urlList = new ArrayList<>();
+        // 筛选行语句  // 添加到list中。
+        FileOperation.lineTextFindOperation(filePath, FUNCTION_PHOTOFIND, lineText -> {
+            urlList.add(lineText);
+            return "";
+        }); //  获取具体文件的所有图片链接
         Map<String, String> urlMap = new HashMap<>();
         for (String s : urlList) {
             Matcher matcher = Pattern.compile(REGEX_PHOTOURL).matcher(s);
-            if (matcher.matches()){
+            if (matcher.matches()) {
                 urlMap.put(matcher.group("fileName"), s);
+            } else {
+                throw new IOException("MD文件图片链接匹配失败。"); // 基本不会发生，毕竟取的时候就是正则取出来的。
             }
         }
         return urlMap;
     }
 
     /**
-     * 传入MD文件读取到的图片链接和实际拥有的图片，返回实际缺少的图片。（寻找空缺图片的链接）
+     * 传入一个文件夹，扫描所有MD文件，获取所有的URL地址。
      *
-     * @param urlSet  md文件中获取到的图片链接
-     * @param fileSet 实际图片的链接
+     * @param folder
+     * @return
+     * @throws IOException
+     */
+    public Map<String, String> getAllPhotoUrlMap(String folder) throws IOException {
+        Map<String, String> urlMap = new HashMap<>();       // 存储所有URL链接
+        Map<String, String> fileMap = FileOperation.getAllFile(folder);  // 获取所有.md文件
+        Set<String> fileNameSet = fileMap.keySet(); // 所有文件文件名
+
+        // 筛选.md文件 // 依次获取.md文件下的所有URL链接    // 合并URL集合
+        fileNameSet.stream().filter(fileName -> fileName.matches("^[^ .].*(.md)$")).forEach(fileName -> {
+            try {
+                Map<String, String> photoUrlMap = getAllPhotoUrlMap(fileMap.get(fileName));  // 合并URL集合 // 输入.md文件的地址
+                for (Map.Entry<String, String> entry : photoUrlMap.entrySet()) {
+                    urlMap.put(entry.getKey(), fileMap.get(fileName) + " <SN> " + entry.getValue());
+                    // <SN> 分隔符  前后有空格。文件结尾不可能为空格，文件夹命名不能有尖括号。
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        return urlMap;
+    }
+
+
+    /**
+     * 比对图片链接：传入MD文件读取到的图片链接和实际拥有的图片，返回实际缺少的图片。（寻找空缺图片的链接）
+     * 单文件使用
+     *
      * @return
      */
-    public Set<String> lackFileByUrl(Set<String> urlSet, Set<String> fileSet) {
-        Set<String> needFileSet = new HashSet<>();
-        for (String url : urlSet) {
-            if (!fileSet.contains(url)) {
-                needFileSet.add(url);
-//                System.out.println("缺少：" + url);
-            } else {
-//                System.out.println("含有：" + url);
+    public Map<String, String> lackFileByUrl(String filePath, String photoFolderPath) {
+        Map<String, String> urlMap = null;  // md文件中获取到的图片链接
+        Map<String, String> fileMap = null;
+        try {
+            urlMap = getPhotoUrlMap(filePath);
+            fileMap = FileOperation.getAllFile(photoFolderPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Map<String, String> lackPhotoMap = new HashMap<>();
+        for (String url : urlMap.keySet()) {
+            if (!fileMap.keySet().contains(url)) {
+                // 链接指定的图片不存在，无效图片
+                lackPhotoMap.put(url, urlMap.get(url));
             }
         }
-        return needFileSet;
+        return lackPhotoMap;
     }
 
     /**
-     * 传入MD文件读取到的图片链接和实际拥有的图片，返回实际多余的图片。（排除无效图片）
+     * 比对图片链接：传入MD文件读取到的图片链接和实际拥有的图片，返回实际多余的图片。（排除无效图片）
+     * 文件夹中的多个文件使用。
      *
-     * @param urlSet  md文件中获取到的图片链接
-     * @param fileSet 实际图片的链接
      * @return
      */
-    public Set<String> surplusFileByUrl(Set<String> urlSet, Set<String> fileSet) {
-        Set<String> surplusFileSet = new HashSet<>();
-        for (String url : fileSet) {
-            if (!urlSet.contains(url)) {
-                surplusFileSet.add(url);
-//                System.out.println("多余：" + url);
-            } else {
-//                System.out.println("拥有：" + url);
-            }
-        }
-        return surplusFileSet;
+    public Map<String, String> surplusFileByUrl(String folderPath, String photoFolderPath) {
+        Map<String, String> surplusFileMap = new HashMap<>();
+        return surplusFileMap;
     }
 
-    @Test
-    public void testc() throws IOException {
-        String folderPath = "D:\\test\\noteTest";
-        String filePath = "D:\\test\\noteTest\\041java.md";
-        MarkdownOperation mdOpera = new MarkdownOperation();
-        Map<String, String> urlMap = mdOpera.getPhotoUrlMap(filePath);
-        Map<String, String> fileMap = FileOperation.getAllFile(folderPath);
-        Set<String> lackSet = mdOpera.lackFileByUrl(urlMap.keySet(), fileMap.keySet());     // 缺少图片的图片链接    // 无效的链接
-        Set<String> surplus = mdOpera.surplusFileByUrl(urlMap.keySet(), fileMap.keySet());  // 没有图片链接的图片 // 多余的图片
-        System.out.println("总共链接：" + urlMap.keySet().size());
-        System.out.println("总共图片：" + fileMap.keySet().size());
-        System.out.println("缺少的图片：" + lackSet.size());
-        System.out.println("多余的图片：" + surplus.size());
-        System.out.println("缺少的图片：");
-        lackSet.stream().forEach(System.out::println);
-        System.out.println("多余的图片：");
-        surplus.stream().forEach(System.out::println);
-    }
-
-
+    //#endregion
 }

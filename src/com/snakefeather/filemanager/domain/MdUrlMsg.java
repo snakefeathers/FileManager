@@ -5,6 +5,9 @@ import com.snakefeather.filemanager.regex.FileRegex;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ *  计划存储Markdown文件读出的信息，之后写入。
+ */
 public class MdUrlMsg implements FileRegex {
 
     //  信息所属文件

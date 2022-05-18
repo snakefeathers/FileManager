@@ -1,146 +1,32 @@
 package com.snakefeather.filemanager.file;
 
-import com.snakefeather.filemanager.function.LineTextFind;
-import com.snakefeather.filemanager.function.LineTextHandle;
 import com.snakefeather.filemanager.regex.FileRegex;
-import org.junit.Test;
-import sun.misc.CharacterEncoder;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemException;
+import java.security.Timestamp;
+import java.time.Instant;
+import java.time.LocalTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+
+/**
+ * 基础的文件操作进行封装，文件的工具类
+ */
 public final class FileOperation implements FileRegex {
 
     // 文件路径匹配
     private static Pattern pattern = Pattern.compile(FileRegex.REGEX_FILEPATH);
 
-    // 搜索到的所有 子文件夹 List<文件夹绝对路径>
-    private static List<String> folderAllList = new LinkedList<>();
-    // 搜索到的所有 子文件  Map<文件名,文件绝对路径>
-    private static Map<String, String> fileAllMap = new HashMap<>();
 
     // 直接内存的空间大小  // 暂且写死 // 后期优化为动态改变
     private static final int SPACE1MB = 1024 * 1024;
 
-
-    //#region 文件搜索
-
-    /**
-     * 传入文件路径，获取文件夹的绝对路径
-     * 如果是文件，就获取它所在的文件夹的绝对路径。
-     * 如果是文件夹，直接获取它的绝对路径。
-     *
-     * @param path
-     * @return
-     * @throws FileNotFoundException
-     */
-    public static String getAbsoluteFile(String path) throws FileNotFoundException {
-        if (!pattern.matcher(path).matches())
-            throw new FileNotFoundException("路径无效");
-        File file = new File(path);
-        if (!file.exists())
-            throw new FileNotFoundException("找不到该文件");
-        if (file.isDirectory()) {
-            //  是文件夹  //   返回此文件夹的绝对地址
-            return file.getAbsolutePath();
-        } else {
-            //  是文件  // 返回所在文件夹
-            return file.getParent();
-        }
-    }
-
-    /**
-     * 传入一个文件夹路径  遍历，递归获取所有的子文件夹  List<子路径>
-     *
-     * @param folderPath
-     * @return
-     * @throws FileNotFoundException
-     */
-    public static List<String> getAllFolder(String folderPath) throws FileNotFoundException {
-        File file = new File(folderPath);
-        if (file.isFile())return new LinkedList<>();        // 是文件，直接返回
-        String[] fileList = file.list(new FilenameFilter() {
-            // 筛选出符合条件的文件夹
-            @Override
-            public boolean accept(File dir, String name) {
-                String folderPath = dir.getAbsolutePath() + File.separator + name;
-                if (!Pattern.compile(FileRegex.REGEX_SYSTEMFILE).matcher(name).matches()) {
-                    //  排除系统文件
-                    File folder = new File(folderPath);
-                    if (folder.exists() && folder.isDirectory() && folder.canRead() && folder.canExecute()) {
-                        //  文件存在，是文件夹，可读
-                        return true;
-                    }
-                }
-                return false;
-            }
-        });
-        if (null != fileList) {
-            if (fileList.length > 0) {
-                for (String folder : fileList) {
-                    //  添加子文件夹      //  如果使用字符串拼接，容易出现双斜杠的路径。在匹配时要考虑双斜杠和单斜杆路径，有点麻烦。
-                    folderAllList.add(new File(file.getAbsolutePath() + File.separator + folder).getAbsolutePath());
-                    //  递归子文件夹  // 注：List是static类型
-                    getAllFolder(file.getAbsolutePath() + File.separator + folder);
-                }
-            }
-        } else {
-            System.out.println("NullPointException:" + file.getAbsolutePath() + "文件异常。");
-            //  移除这个文件夹
-            folderAllList.remove(file.getAbsolutePath());
-        }
-        return folderAllList;
-    }
-
-    /**
-     * 传入文件夹路径，获取它下面的所有文件以及子文件。 Map<文件名，文件路径>
-     *
-     * @param path
-     * @return 文件名 ，文件路径
-     * @throws FileNotFoundException
-     */
-    public static Map<String, String> getAllFile(String path) throws FileNotFoundException {
-        getAllFolder(path);
-        // 添加这个文件夹本身
-        folderAllList.add(path);
-        if (null != folderAllList && folderAllList.size() > 0) {
-            for (String folderPath : folderAllList) {
-                //  遍历文件夹列表
-                File folder = new File(folderPath);
-                String[] fileList = folder.list(new FilenameFilter() {
-                    // 筛选出符合条件的文件
-                    @Override
-                    public boolean accept(File dir, String name) {
-                        File f = new File(dir.getAbsoluteFile() + File.separator + name);
-                        if (f.isFile()) {
-                            return true;
-                        }
-                        return false;
-                    }
-                });
-                if (null != fileList) {
-                    if (fileList.length > 0) {
-                        //  遍历文件夹中的文件
-                        for (String file : fileList) {
-                            File f = new File(folder.getAbsolutePath() + File.separator + file);
-                            fileAllMap.put(f.getName(), f.getAbsolutePath());
-                        }
-                    }
-                } else {
-                    System.out.println("NullPointException:" + folder.getAbsolutePath() + "异常");
-                }
-            }
-        }
-        return fileAllMap;
-    }
-    //#endregion
 
     //#region 行文本处理
 
@@ -152,7 +38,7 @@ public final class FileOperation implements FileRegex {
      * @return 获取到的文本
      * @throws IOException
      */
-    public static boolean lineTextFindOperation(String filePath, LineTextFind findPhotoUrl, LineTextHandle lineTextHandle) throws IOException {
+    public static boolean lineTextFindOperation(String filePath, Predicate<String> findPhotoUrl, Function<String, String> lineTextHandle) throws IOException {
         File file = new File(filePath);
         if (!(file.exists() && file.isFile() && file.canRead() && file.canExecute()))
             return false;
@@ -160,8 +46,8 @@ public final class FileOperation implements FileRegex {
              BufferedReader bufr = new BufferedReader(fr);) {
             String s = null;
             while ((s = bufr.readLine()) != null) {
-                if (findPhotoUrl.getLineTest(s)) {    // 筛选语句
-                    lineTextHandle.updateLineTest(s);    // 进行操作
+                if (findPhotoUrl.test(s)) {    // 筛选语句
+                    lineTextHandle.apply(s);    // 进行操作
                 }
             }
         }
@@ -176,7 +62,7 @@ public final class FileOperation implements FileRegex {
      * @return 获取到的文本
      * @throws IOException
      */
-    public static boolean lineTextUpdateOperation(String filePath, LineTextFind findPhotoUrl, LineTextHandle lineTextHandle) throws IOException {
+    public static boolean lineTextUpdateOperation(String filePath, Predicate<String> findPhotoUrl, Function<String, String> lineTextHandle) throws IOException {
         File file = new File(filePath);
         if (!(file.exists() && file.isFile() && file.canRead() && file.canExecute()))
             return false;
@@ -185,8 +71,8 @@ public final class FileOperation implements FileRegex {
              BufferedWriter bufw = new BufferedWriter(new FileWriter(tempFile));) {
             String s = null;
             while ((s = bufr.readLine()) != null) {
-                if (findPhotoUrl.getLineTest(s)) {    // 筛选语句
-                    s = lineTextHandle.updateLineTest(s);
+                if (findPhotoUrl.test(s)) {    // 筛选语句
+                    s = lineTextHandle.apply(s);
                 }
                 bufw.write(s + "\n");    // 修改行文本
             }
@@ -297,57 +183,33 @@ public final class FileOperation implements FileRegex {
      */
     public static boolean copyFile(String filePath, String folderPath, String fileName) {
         File file = new File(filePath);
-        //  确定文件有效性
-        if (!file.exists()) {
-            System.out.println("\n路径无效，该文件不存在。\n路径:" + file.getAbsolutePath());
-        } else if (!file.isFile()) {
-            System.out.println("\n目标对象不是文件。\n路径:" + file.getAbsolutePath());
-        }
         File folder = new File(folderPath);
+
+        //  确定文件有效性
+        if (!file.exists() || !file.isFile()) {
+            //SF: 做一次基础检查。   具体检查靠上层。
+            throw new IllegalArgumentException("路径无效，该文件不存在。");
+        }
         //  确定文件夹有效性
-        if (!folder.exists()) {
+        if (!folder.exists() || !folder.isDirectory()) {
             //  win10中，文件夹可以是“1.txt"这种新式，有点麻烦。
-            if (!folder.isDirectory()) {
-                System.out.println("\n目标路径是文件，不是文件夹。\n路径:" + folder.getAbsolutePath());
-                return false;
-            }
-            if (!folder.mkdirs()) {
-                //  没有目标文件夹，尝试进行创建，创建失败。
-                System.out.println("\n目标路径不存在，尝试创建时失败。\n路径:" + folder.getAbsolutePath());
-                return false;
-            }
-        }
-        // 如果文件名为空  就使用原文件的文件名  //  所指定的文件名
-        if (null == fileName) fileName = filePath.substring(filePath.lastIndexOf("\\") + 1);
-        else {
-            // 获取指定文件的后缀    //  隐患  // 文件名中可以含有'.' // File.getName()会在File对象是文件夹时，返回文件夹路径
-            String suffix;
-            if (file.getName().indexOf('.') >= 0) {
-                suffix = file.getName().substring(file.getName().indexOf('.'));
-                fileName += suffix;
-            }
-        }
-        //  确定指定文件名有效性
-        if (!Pattern.compile(REGEX_FOLDERPATH).matcher(fileName).matches()) {
-            System.out.println("指定的文件名无效。");
-            return false;
+            throw new IllegalArgumentException("目标路径无效。");
         }
 
+        //SF: 调用方法.  如果目标位置已有同名文件，就会生成随机的文件。  没有的话，就使用原有的文件名。
+        if (fileName == null) {
+            fileName = makeFileName(folder, file.getName());
+        } else {
+            fileName = makeFileName(folder, fileName);
+        }
         //  创建指定文件。
         File newFile = new File(folder.getAbsolutePath() + File.separator + fileName);
         if (newFile.exists()) {
-            System.out.println("\n目标位置存在指定文件。\n路径:" + newFile.getAbsolutePath());
-            return false;
-        } else {
-            try {
-                if (!newFile.createNewFile()) {
-                    System.out.println("\n创建指定文件失败。\n路径:" + newFile.getAbsolutePath());
-                }
-            } catch (IOException e) {
-                e.printStackTrace();        //  后期优化为日志文件
-                System.out.println("\n创建指定文件失败。\n路径:" + newFile.getAbsolutePath());
-            }
+            throw new IllegalArgumentException("创建文件失败，可能是并发创建文件导致重名");
         }
+
+        //SF:   SnakeFeather 2022——05——18 改于此处。
+        //SF:  记录：   以上验证代码抽象处理。   此方法方法尽可能精简。
         //  开始移动  // 低效  // 优化  使用直接内存
         try (FileInputStream fis = new FileInputStream(file);
              FileOutputStream fos = new FileOutputStream(newFile);
@@ -383,6 +245,42 @@ public final class FileOperation implements FileRegex {
         return true;
     }
     //#endregion
+
+
+    /**
+     * 在指定路径中，起个文件名。重名就加序号。
+     *
+     * @param folder
+     * @param fileName
+     * @return
+     */
+    public static String makeFileName(File folder, String fileName) {
+        File file = new File(folder.getAbsolutePath() + File.separator + fileName);
+        for (int i = 1; file.exists(); i++) {
+            if (i > 1000) {
+                //SF:  为了安全，加一条吧。
+                throw new IllegalArgumentException("重名文件太多。");
+            }
+            StringBuffer newFileName = new StringBuffer(folder.getAbsolutePath());
+            newFileName.append(File.separator);
+            //SF:  存在重名文件，加序号。
+            if (fileName.indexOf('.') >= 0) {
+                //SF: 加文件名
+                newFileName.append(fileName.substring(0, fileName.indexOf('.')));
+                //SF: 加序号
+                newFileName.append("_").append(i);
+                //SF: 加后缀
+                newFileName.append(fileName.substring(fileName.indexOf('.')));
+            } else {
+                //SF: 加文件名
+                newFileName.append(fileName);
+                //SF: 加序号
+                newFileName.append("_").append(i);
+            }
+            file = new File(newFileName.toString());
+        }
+        return file.getName();
+    }
 
     /**
      * 获取文件编码  // 待优化，暂时写死

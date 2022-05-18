@@ -1,16 +1,17 @@
-package com.snakefeather.filemanager.text;
+package com.snakefeather.filemanager.service.impl;
 
 import com.snakefeather.filemanager.file.FileOperation;
-import com.snakefeather.filemanager.function.LineTextFind;
-import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MarkdownOperation {
+/**
+ * 封存Markdown操作的工具类
+ */
+public class MarkdownServiceImpl {
 
     /**
      * Markdown 图片链接正则
@@ -21,7 +22,7 @@ public class MarkdownOperation {
     //#region  图片链接处理
     private static boolean isCodeChunk = true;
     //  图片链接筛选器  变量  一个函数
-    private LineTextFind FUNCTION_PHOTOFIND = textLine -> {
+    private Predicate<String> FUNCTION_PHOTOFIND = textLine -> {
         if (textLine.matches(".{3,3}.*")) {
             isCodeChunk = !isCodeChunk;
         }
@@ -65,21 +66,21 @@ public class MarkdownOperation {
      */
     public Map<String, String> getAllPhotoUrlMap(String folder) throws IOException {
         Map<String, String> urlMap = new HashMap<>();       // 存储所有URL链接
-        Map<String, String> fileMap = FileOperation.getAllFile(folder);  // 获取所有.md文件
-        Set<String> fileNameSet = fileMap.keySet(); // 所有文件文件名
-
-        // 筛选.md文件 // 依次获取.md文件下的所有URL链接    // 合并URL集合
-        fileNameSet.stream().filter(fileName -> fileName.matches("^[^ .].*(.md)$")).forEach(fileName -> {
-            try {
-                Map<String, String> photoUrlMap = getAllPhotoUrlMap(fileMap.get(fileName));  // 合并URL集合 // 输入.md文件的地址
-                for (Map.Entry<String, String> entry : photoUrlMap.entrySet()) {
-                    urlMap.put(entry.getKey(), fileMap.get(fileName) + " <SN> " + entry.getValue());
-                    // <SN> 分隔符  前后有空格。文件结尾不可能为空格，文件夹命名不能有尖括号。
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+//        Map<String, String> fileMap = FileOperation.getAllFile(folder);  // 获取所有.md文件
+//        Set<String> fileNameSet = fileMap.keySet(); // 所有文件文件名
+//
+//        // 筛选.md文件 // 依次获取.md文件下的所有URL链接    // 合并URL集合
+//        fileNameSet.stream().filter(fileName -> fileName.matches("^[^ .].*(.md)$")).forEach(fileName -> {
+//            try {
+//                Map<String, String> photoUrlMap = getAllPhotoUrlMap(fileMap.get(fileName));  // 合并URL集合 // 输入.md文件的地址
+//                for (Map.Entry<String, String> entry : photoUrlMap.entrySet()) {
+//                    urlMap.put(entry.getKey(), fileMap.get(fileName) + " <SN> " + entry.getValue());
+//                    // <SN> 分隔符  前后有空格。文件结尾不可能为空格，文件夹命名不能有尖括号。
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        });
         return urlMap;
     }
 
@@ -93,12 +94,12 @@ public class MarkdownOperation {
     public Map<String, String> lackFileByUrl(String filePath, String photoFolderPath) {
         Map<String, String> urlMap = null;  // md文件中获取到的图片链接
         Map<String, String> fileMap = null;
-        try {
-            urlMap = getPhotoUrlMap(filePath);
-            fileMap = FileOperation.getAllFile(photoFolderPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            urlMap = getPhotoUrlMap(filePath);
+//            fileMap = FileOperation.getAllFile(photoFolderPath);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         Map<String, String> lackPhotoMap = new HashMap<>();
         for (String url : urlMap.keySet()) {
             if (!fileMap.keySet().contains(url)) {

@@ -1,4 +1,5 @@
 out
+test
 .idea
 src/com/snakefeather/test
 src/com/snakefeather/filemanager/snakefeather.java
@@ -8,10 +9,14 @@ src/com/snakefeather/filemanager/snakefeather.java
 *.jar
 *.imi
 *.properties
+*.txt
+config
+design
+
 
 # 设计图
 # design
 *.psd
-
+UpdateLog.md
 
 

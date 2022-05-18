@@ -1,17 +1,13 @@
-package com.snakefeather.filemanager.text;
+package com.snakefeather.filemanager.service.impl;
 
 import com.snakefeather.filemanager.file.FileOperation;
 
-import javax.xml.crypto.Data;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.util.Date;
-import java.util.List;
 
-public class LogOperation {
+/**
+ *  建立日志文件的工具类
+ */
+public class LogServiceImpl {
 
     private final String PREFIX = "snakeFeather|";
 

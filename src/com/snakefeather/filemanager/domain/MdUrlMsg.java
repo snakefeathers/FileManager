@@ -1,6 +1,6 @@
 package com.snakefeather.filemanager.domain;
 
-import com.snakefeather.filemanager.regex.FileRegex;
+import com.snakefeather.filemanager.regex.RegexStore;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 /**
  *  计划存储Markdown文件读出的信息，之后写入。
  */
-public class MdUrlMsg implements FileRegex {
+public class MdUrlMsg {
 
     //  信息所属文件
     private String fileName = "";
@@ -30,7 +30,7 @@ public class MdUrlMsg implements FileRegex {
     //    String REGEX_PHOTOURL = ".*\\!\\[(?<remark>.*)\\]\\((?<filePath>.*[\\/]{1,2}(?<fileName>[^\\/.]+[.](png)|(jpg)))\\)";
 //    private static final Pattern urlPattern = Pattern.compile(REGEX_PHOTOURL);
     private static final Pattern urlPattern = Pattern.compile("");
-    private static final Pattern symbolPattern = Pattern.compile(REGEX_SYMBOL);
+    private static final Pattern symbolPattern = Pattern.compile(RegexStore.REGEX_SYMBOL);
 
     public MdUrlMsg() {
     }

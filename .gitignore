@@ -19,4 +19,7 @@ design
 *.psd
 UpdateLog.md
 
-
+# eclipse
+.settings
+.classpath
+.project

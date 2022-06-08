@@ -1,14 +1,11 @@
 package com.snakefeather.filemanager.file;
 
-import com.snakefeather.filemanager.regex.FileRegex;
+import com.snakefeather.filemanager.regex.RegexStore;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystemException;
-import java.security.Timestamp;
-import java.time.Instant;
-import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -18,10 +15,10 @@ import java.util.regex.Pattern;
 /**
  * 基础的文件操作进行封装，文件的工具类
  */
-public final class FileOperation implements FileRegex {
+public final class FileOperation {
 
     // 文件路径匹配
-    private static Pattern pattern = Pattern.compile(FileRegex.REGEX_FILEPATH);
+    private static Pattern pattern = Pattern.compile(RegexStore.REGEX_FILEPATH);
 
 
     // 直接内存的空间大小  // 暂且写死 // 后期优化为动态改变
@@ -34,11 +31,14 @@ public final class FileOperation implements FileRegex {
      * 传入文件路径，遍历它下面的每一行。根据lambda表达式。并根据语句，进行相应的处理。只读取，不修改语句。（安全）
      *
      * @param filePath     具体文件的路径
-     * @param findPhotoUrl 函数式接口
+     * @param findPhotoUrl 筛选函数
+     * @param lineTextHandle 处理函数
      * @return 获取到的文本
      * @throws IOException
      */
-    public static boolean lineTextFindOperation(String filePath, Predicate<String> findPhotoUrl, Function<String, String> lineTextHandle) throws IOException {
+    public static boolean lineTextFindOperation(String filePath,
+                                                Predicate<String> findPhotoUrl,
+                                                Function<String, String> lineTextHandle) throws IOException {
         File file = new File(filePath);
         if (!(file.exists() && file.isFile() && file.canRead() && file.canExecute()))
             return false;
@@ -58,7 +58,8 @@ public final class FileOperation implements FileRegex {
      * 传入文件路径，遍历它下面的每一行。根据lambda表达式。并根据语句，进行相应的处理。可能会修改语句。（不安全）
      *
      * @param filePath     具体文件的路径
-     * @param findPhotoUrl 函数式接口
+     * @param findPhotoUrl 筛选函数
+     * @param lineTextHandle 处理函数
      * @return 获取到的文本
      * @throws IOException
      */
@@ -74,10 +75,10 @@ public final class FileOperation implements FileRegex {
                 if (findPhotoUrl.test(s)) {    // 筛选语句
                     s = lineTextHandle.apply(s);
                 }
-                bufw.write(s + "\n");    // 修改行文本
+                bufw.write(s + "\n");    // 修改行文本   //收到输入可能会忽视换行，直接手动加一个。
             }
         }
-        // 替换文件
+        // 替换文件 // 删除旧文件，新文件重命名为原文件，以此替代原文件。
         String fileName = file.getAbsolutePath();
         file.delete();
         tempFile.renameTo(new File(fileName));
@@ -92,7 +93,7 @@ public final class FileOperation implements FileRegex {
      * @param stringList
      * @return
      */
-    public static boolean lineTextAddOperation(String filePath, List<String> stringList) {
+    public static boolean textAddOperation(String filePath, List<String> stringList) {
         File file = new File(filePath);
         if (!(file.exists() && file.isFile() && file.canRead() && file.canExecute()))
             return false;
@@ -254,7 +255,7 @@ public final class FileOperation implements FileRegex {
      * @param fileName
      * @return
      */
-    public static String makeFileName(File folder, String fileName) {
+    private static String makeFileName(File folder, String fileName) {
         File file = new File(folder.getAbsolutePath() + File.separator + fileName);
         for (int i = 1; file.exists(); i++) {
             if (i > 1000) {

@@ -34,7 +34,7 @@ public class FolderOperation {
             @Override
             public boolean accept(File dir, String name) {
                 String folderPath = dir.getAbsolutePath() + File.separator + name;
-                if (!Pattern.compile(RegexStore.REGEX_SYSTEMFILE).matcher(name).matches()) {
+                if (!Pattern.compile(RegexStore.SYSTEMFILE).matcher(name).matches()) {
                     //  排除系统文件
                     File folder = new File(folderPath);
                     if (folder.exists() && folder.isDirectory() && folder.canRead() && folder.canExecute()) {

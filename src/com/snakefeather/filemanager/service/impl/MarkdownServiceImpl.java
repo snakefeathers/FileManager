@@ -49,7 +49,7 @@ public class MarkdownServiceImpl implements MarkdownService {
                         isCodeChunk = !isCodeChunk;
                     }
                     if (isCodeChunk) return false;  // 最原始的方法，跳过代码块。
-                    return Pattern.compile(".*" + RegexStore.PHOTOURL + ".*").matcher(textLine).matches();
+                    return Pattern.compile(".*" + RegexStore.PHOTO_URL + ".*").matcher(textLine).matches();
                 }, lineText -> {
                     urlList.add(lineText);
                     return "";
@@ -59,7 +59,7 @@ public class MarkdownServiceImpl implements MarkdownService {
         Map<String, String> urlMap = new HashMap<>();
         for (String s : urlList) {
             int start = 0;
-            Matcher matcher = Pattern.compile(RegexStore.PHOTOURL).matcher(s);
+            Matcher matcher = Pattern.compile(RegexStore.PHOTO_URL).matcher(s);
             while (matcher.find(start)) {
                 urlMap.put(matcher.group("fileName"), s);   // Map<图片名，URL原文>
                 //  处理一行内多个符合条件的情况。
@@ -91,7 +91,7 @@ public class MarkdownServiceImpl implements MarkdownService {
                         isCodeChunk = !isCodeChunk;
                     }
                     if (isCodeChunk) return false;  // 最原始的方法，跳过代码块。
-                    return Pattern.compile(".*" + RegexStore.PHOTOHTML + ".*").matcher(textLine).matches();
+                    return Pattern.compile(".*" + RegexStore.PHOTO_HTML + ".*").matcher(textLine).matches();
                 }, lineText -> {
                     urlList.add(lineText);
                     return "";
@@ -101,7 +101,7 @@ public class MarkdownServiceImpl implements MarkdownService {
         Map<String, String> urlMap = new HashMap<>();
         for (String s : urlList) {
             int start = 0;
-            Matcher matcher = Pattern.compile(RegexStore.PHOTOURL).matcher(s);
+            Matcher matcher = Pattern.compile(RegexStore.PHOTO_URL).matcher(s);
             while (matcher.find(start)) {
                 urlMap.put(matcher.group("fileName"), s);   // Map<图片名，URL原文>
                 //  处理一行内多个符合条件的情况。
@@ -117,6 +117,7 @@ public class MarkdownServiceImpl implements MarkdownService {
     @Override
     public Map<String, String> surplusFileByUrl(String folderPath, String photoFolderPath) throws IOException {
         //   surplus  ： 冗余
+
         Map<String, String> surplusFileMap = new HashMap<>();
         // 冗余的图片隐射  Map<图片名，绝对路径>
         Set<String> photoSet = getAllPhotoUrlMap(folderPath).keySet();

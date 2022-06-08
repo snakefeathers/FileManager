@@ -17,8 +17,6 @@ import java.util.regex.Pattern;
  */
 public final class FileOperation {
 
-    // 文件路径匹配
-    private static Pattern pattern = Pattern.compile(RegexStore.REGEX_FILEPATH);
 
 
     // 直接内存的空间大小  // 暂且写死 // 后期优化为动态改变

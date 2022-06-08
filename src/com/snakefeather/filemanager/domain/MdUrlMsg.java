@@ -30,7 +30,7 @@ public class MdUrlMsg {
     //    String REGEX_PHOTOURL = ".*\\!\\[(?<remark>.*)\\]\\((?<filePath>.*[\\/]{1,2}(?<fileName>[^\\/.]+[.](png)|(jpg)))\\)";
 //    private static final Pattern urlPattern = Pattern.compile(REGEX_PHOTOURL);
     private static final Pattern urlPattern = Pattern.compile("");
-    private static final Pattern symbolPattern = Pattern.compile(RegexStore.REGEX_SYMBOL);
+    private static final Pattern symbolPattern = Pattern.compile(RegexStore.SYMBOL);
 
     public MdUrlMsg() {
     }

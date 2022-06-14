@@ -5,6 +5,8 @@ import com.snakefeather.filemanager.regex.RegexStore;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -67,7 +69,7 @@ public class FolderOperation {
      * @return 文件名 ，文件路径
      * @throws FileNotFoundException
      */
-    public static Map<String, String> getAllFile(String folderPath) throws FileNotFoundException {
+    public static Map<String, Path> getAllFile(String folderPath) throws FileNotFoundException {
         return getAllFileBySuffix(folderPath, ".*");
     }
 
@@ -79,9 +81,9 @@ public class FolderOperation {
      * @return 文件名 ，文件路径
      * @throws FileNotFoundException
      */
-    public static Map<String, String> getAllFileBySuffix(String folderPath, String regexStr) throws FileNotFoundException {
+    public static Map<String, Path> getAllFileBySuffix(String folderPath, String regexStr) throws FileNotFoundException {
         // 搜索到的所有 子文件  Map<文件名,文件绝对路径>
-        Map<String, String> fileAllMap = new HashMap<>();
+        Map<String, Path> fileAllMap = new HashMap<>();
         // 搜索到的所有 子文件夹 List<文件夹绝对路径>
         List<String> folderAllList = getAllFolder(folderPath);
 
@@ -105,7 +107,7 @@ public class FolderOperation {
                     //  遍历文件夹中的文件
                     for (String file : fileList) {
                         File f = new File(folder.getAbsolutePath() + File.separator + file);
-                        fileAllMap.put(f.getName(), f.getAbsolutePath());
+                        fileAllMap.put(f.getName(), Paths.get(f.getAbsolutePath()));
                     }
                 } else {
                     System.out.println("文件夹:" + folder.getAbsolutePath() + "未包含文件：|" + regexStr + "|");

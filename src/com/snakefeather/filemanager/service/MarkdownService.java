@@ -1,6 +1,9 @@
 package com.snakefeather.filemanager.service;
 
+import com.snakefeather.filemanager.domain.TextDiv;
+
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 
 public interface MarkdownService {
@@ -13,7 +16,7 @@ public interface MarkdownService {
      * @return
      * @throws IOException
      */
-    public Map<String, String> getPhotoUrlMap(String filePath) throws IOException;
+    public Map<String, TextDiv> getPhotoUrlMap(String filePath) throws IOException;
 
 
     /**
@@ -23,7 +26,7 @@ public interface MarkdownService {
      * @return
      * @throws IOException
      */
-    public Map<String, String> getAllPhotoUrlMap(String folderPath) throws IOException;
+    public Map<String, TextDiv> getAllPhotoUrlMap(String folderPath) throws IOException;
 
     /**
      * 比对图片链接：传入MD文件读取到的图片链接和实际拥有的图片，返回实际多余的图片。（排除无效图片）
@@ -34,7 +37,7 @@ public interface MarkdownService {
      * @return 多余的图片的Map  Map<图片名，绝对路径>
      * @throws IOException
      */
-    public Map<String, String> surplusFileByUrl(String folderPath, String photoFolderPath) throws IOException;
+    public Map<String, Path> surplusFileByUrl(String folderPath, String photoFolderPath) throws IOException;
 
 
     /**
@@ -43,7 +46,7 @@ public interface MarkdownService {
      *
      * @return
      */
-    public Map<String, String> lackUrlByFile(String filePath, String photoFolderPath) throws IOException;
+    public Map<String, TextDiv> lackUrlByFile(String filePath, String photoFolderPath) throws IOException;
 
     /**
      *      找出指定文件夹下所有md文件中，匹配无效的图片链接。即，有链接，缺少图片。
@@ -52,7 +55,7 @@ public interface MarkdownService {
      * @return  多余的图片链接
      * @throws IOException
      */
-    public Map<String, String> lackAllUrlByFolder(String folderPath, String photoFolderPath) throws IOException;
+    public Map<String, TextDiv> lackAllUrlByFolder(String folderPath, String photoFolderPath) throws IOException;
 
 
     /**

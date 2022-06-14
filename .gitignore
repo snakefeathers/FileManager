@@ -8,6 +8,8 @@ src/com/snakefeather/filemanager/snakefeather.java
 *.class
 *.jar
 *.imi
+*.iml
+
 *.properties
 *.txt
 config

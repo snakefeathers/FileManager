@@ -63,6 +63,7 @@ public class MarkdownServiceImpl implements MarkdownService {
                         String[] strs = textLine.split("\\!\\[");
                         for (String str : strs) {
                             if (str.length() > 0) {
+                                stringBuilder.append("![");
                                 stringBuilder.append(str + "\n");
                             }
                         }

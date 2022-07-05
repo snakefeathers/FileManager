@@ -1,27 +1,38 @@
 out
 test
 .idea
-src/com/snakefeather/test
-src/com/snakefeather/filemanager/snakefeather.java
+src/main/java/com/snakefeather/snakefeather.java
+src/test
 
-.gitignore
-*.class
-*.jar
-*.imi
-*.iml
-
-*.properties
-*.txt
+target
+out
 config
 design
 
 
+
 # 设计图
 # design
-*.psd
 UpdateLog.md
 
 # eclipse
 .settings
 .classpath
 .project
+
+
+pom.xml
+.gitignore
+
+
+
+
+*.class
+*.jar
+*.imi
+*.iml
+*.properties
+*.txt
+*.psd
+
+

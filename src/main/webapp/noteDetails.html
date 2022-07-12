@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:with="project='http://localhost:8080/FileManager/'">
+    <title>墨折羽</title>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" th:href="@{http://localhost:8080/FileManager/photos/favicon.ico}"
+          href="photos/favicon.ico">
+
+    <link th:href="@{http://localhost:8080/FileManager/css/bootstrap/bootstrap.min.css}"
+          href="css/bootstrap/bootstrap.css"
+          rel="stylesheet"/>
+    <script th:src="@{http://localhost:8080/FileManager/js/bootstrap/jquery-3.0.0.min.js}"
+            src="js/bootstrap/jquery-3.0.0.min.js"></script>
+    <script th:src="@{http://localhost:8080/FileManager/js/bootstrap/bootstrap.min.js}"
+            src="js/bootstrap/bootstrap.min.js"></script>
+
+    <link href="http://localhost:8080/FileManager/mocss/note.css" rel="stylesheet"/>
+
+
+    <link rel="stylesheet" th:href="@{http://localhost:8080/FileManager/css/editormd/style.css}"
+          href="css/editormd/style.css"/>
+    <link rel="stylesheet" th:href="@{http://localhost:8080/FileManager/css/editormd/editormd.css}"
+          href="css/editormd/editormd.css"/>
+</head>
+<body>
+
+<nav class="navbar navbar-default" th:fragment="nav">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">墨折羽</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li><a href="#" disabled="disabled">首页</a></li>
+                <!--                <li><a href="#" th:href="/web/show">网页</a></li>-->
+                <li class="active"><a href="#">笔记</a></li>
+                <li><a href="#">前端</a></li>
+                <li><a href="#">后端</a></li>
+                <li><a href="#">日志</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#">登录</a></li>
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+<div class="container-fluid">
+    <div class="col-2">
+
+    </div>
+    <div class="col-10">
+        <div id="test-editormd">
+            <textarea id="content" name="content" style="display:none;" th:text="${mdText}"></textarea>
+        </div>
+    </div>
+    <div class="row">
+        <input type="text" th:value="${mdId}" value="1" id="mdId" style="display: none;"/>
+        <button class="btn-block" id="btn-save">保存</button>
+        <div class="alert alert-success fade" id="save-prompt">
+            <strong>保存成功...</strong>
+        </div>
+    </div>
+</div>
+</body>
+<script th:src="@{http://localhost:8080/FileManager/mojs/note.js}" src="mojs/note.js"></script>
+<script>
+    // let itemDivs = document.querySelectorAll(".note-item");
+    // $(".note-item").click(function (){
+    //     let cl = this.class;
+    //     console.log(cl);
+    //     window.location.href='';
+    // });
+</script>
+
+<!--<script th:src="@{http://localhost:8080/FileManager/js/jquery-3.0.0.min.js}" src="https://cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>-->
+<script th:src="@{http://localhost:8080/FileManager/js/editormd/jquery.min.js}"
+        src="js/editormd/jquery.min.js"></script>
+<script th:src="@{http://localhost:8080/FileManager/js/editormd/editormd.min.js}"
+        src="js/editormd/editormd.min.js"></script>
+<script type="text/javascript">
+    // $(function() {
+    //     var editor = editormd("test-editor", {
+    //         // width  : "100%",
+    //         // height : "100%",
+    //         path   : "editormd/lib/"
+    //     });
+    // });
+
+    var testEditor;
+    $(function () {
+        testEditor = editormd("test-editormd", {
+            width: "96%",
+            height: 700,
+            syncScrolling: "single",
+            path: "http://localhost:8080/FileManager/lib/", //依赖lib文件夹路径
+            emoji: true,
+            taskList: true,
+            tocm: true,
+            //  工具栏固定
+            toolbarAutoFixed: true,
+            imageUpload: true,
+            imageFormats: ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
+            imageUploadURL: "http://localhost:8080/FileManager/file/photo",	//上传图片控制器Mapping  //SF: 上传地址
+            //  动态高度
+            // autoHeight : true,
+            //  禁用部分组合键
+            disabledKeyMaps: [
+                "Ctrl-B", "F11", "F10"  // disable some default keyboard shortcuts handle
+            ],
+            //  加载完成后的函数
+            onload: function () {
+
+
+                //  键盘快捷键
+                //SF： 设置快捷键
+                var keyMap = {
+                    "Ctrl-S": function (cm) {
+                        alert("Ctrl+S");
+                    },
+                    "Ctrl-A": function (cm) { // default Ctrl-A selectAll
+                        // custom
+                        alert("Ctrl+A");
+                        cm.execCommand("selectAll");
+                    }
+                };
+                var keyMap2 = {
+                    "Ctrl-T": function (cm) {
+                        alert("Ctrl+T");
+                    }
+                };
+
+                this.addKeyMap(keyMap);
+                this.addKeyMap(keyMap2);
+                this.removeKeyMap(keyMap2);  // 移除快捷键
+            },
+
+        });
+
+        //  工具栏的浮动  与固定
+        $("#enable-btn").bind("click", function () {
+            testEditor.setToolbarAutoFixed(true);
+            // 或者设置   testEditor.config("toolbarAutoFixed", true);
+            //           toolbarAutoFixed", true
+
+        });
+        $("#disable-btn").bind("click", function () {
+            testEditor.setToolbarAutoFixed(false);
+        });
+
+
+        //  去往指定行
+        $("#goto-line-btn").bind("click", function () {
+            testEditor.gotoLine(90);
+        });
+        $("#goto-line-400-btn").bind("click", function () {
+            testEditor.gotoLine(400);
+        });
+        // 去往第一行
+        $("#goto-first-line-btn").bind("click", function () {
+            testEditor.gotoLine("first");
+            // or
+            //testEditor.gotoLine(1);
+        });
+        // 去往末尾
+        $("#goto-last-line-btn").bind("click", function () {
+            testEditor.gotoLine("last");
+            // or
+            //testEditor.gotoLine(testEditor.cm.lineCount());
+        });
+    });
+    // 获取 Markdown 源码
+    // let text = testEditor.getMarkdown();
+    // 获取 Textarea 保存的 HTML 源码
+    // let html = testEditor.getHTML();
+
+    //  获取指定区域的文本
+    //  testEditormd.setSelection({line:1, ch:0}, {line:5, ch:100});
+    // 获取选择的文本
+    // console.log("getSelection =>", testEditormd.getSelection());
+
+    let MAIN_URL = "http://localhost:8080/FileManager";
+    $("#btn-save").click(function () {
+        let markdownText = testEditor.getMarkdown();
+        $.ajax({
+            type: "POST",
+            url: MAIN_URL + "/note/details/" + $("#mdId").val() + "/updateAll",
+            //data:{"id":3}, //  请求参数    // data参数是可选的，有多种写法，也可以直接在url参数拼接参数上去，例如这样：url:"getUser?id="+val,
+            data: {"mdText": markdownText},
+            async: true,   // 异步，默认开启，也就是$.ajax后面的代码是不是跟$.ajx里面的代码一起执行
+            cache: true,  // 表示浏览器是否缓存被请求页面,默认是 true
+            dataType: "json",   // 返回浏览器的数据类型，指定是json格式，前端这里才可以解析json数据
+            success: function (data) {
+                //  返回数据
+                if (data == true) {
+                    console.log("成功");
+                    alert("成功...");
+                } else {
+                    console.log("失败");
+                    alert("失败...");
+                }
+
+            },
+            error: function () {
+                console.log("发生错误")
+            },
+            complete: function () {
+                // console.log("ajax请求完事，最终操作在这里完成")
+            }
+        });
+    });
+
+
+</script>
+</html>

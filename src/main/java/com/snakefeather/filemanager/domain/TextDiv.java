@@ -9,7 +9,7 @@ import java.util.List;
  * 目前来看，日常元素是一层，代码块，流程图可能用到二层，递归组合有点多余。
  * 不过在不影响开发的基础上，增加了可扩展性，是值得的。
  */
-public abstract class TextDiv {
+public  class TextDiv {
 
     //#region   文本位置信息
 
@@ -46,6 +46,8 @@ public abstract class TextDiv {
     public enum MsgTypeEnum {
         URL,            //  ![img](photos/535.jpg)
         LABEL_IMG,      //  <img src="photos\依赖倒转原则.png" style="zoom:80%;" />
+        CODE,           //  代码块
+        ORDINARY;       //  普通文本
     }
 
     //  暂时有些多余。先写着。
@@ -72,6 +74,15 @@ public abstract class TextDiv {
             return null;
         }
     }
+    //  获取要返回给前端的文本。    图片路径啥的可能要预处理，留下可修改的空间。
+    public String toWebStr(){
+        return originalText;
+    }
+    //  获取要写入到文件的文本
+    public String toLocalStr(){
+        return originalText;
+    }
+
 
     //#region   通用方法  Getter() 与 toString()
 

@@ -123,6 +123,11 @@ public class RegexStore {
 
 
     //#region  Markdown 正则      ----------------------------------
+    // 示例：
+    //    ![img](photos/535.jpg)
+    //    ![image-20220313173812070](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20220313173812070.png)
+    //    ![img](https://lab.huaweicloud.com/img/tc/sp-im/1519/1567681665-step-1.png)
+    //    <img src="E:\notes\main\notes\photos\image-20220319181759862.png" style="zoom:80%;" />
 
     // 图片名 正则
     public static final String PHOTO = new Supplier<String>() {
@@ -184,7 +189,7 @@ public class RegexStore {
     }.get();
 
 
-    // 图片链接粗匹配
+    // 图片链接粗匹配      匹配  ![]()
     public static final String PHOTO_URL_EASY = new Supplier<String>() {
         @Override
         public String get() {
@@ -241,9 +246,9 @@ public class RegexStore {
         /*
         实例：
             ![img](photos/535.jpg)
+            ![image-20220313173812070](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20220313173812070.png)
             ![img](https://lab.huaweicloud.com/img/tc/sp-im/1519/1567681665-step-1.png)
             ![运行结果](/photos/image-20211221213605502.png)
-            ![image-20220313173812070](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20220313173812070.png)
 
             ![img](photos/53](22)22.jpg)
 

@@ -3,9 +3,12 @@ package com.snakefeather.filemanager.file;
 import com.snakefeather.filemanager.regex.RegexStore;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystemException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -18,7 +21,6 @@ import java.util.regex.Pattern;
 public final class FileOperation {
 
 
-
     // 直接内存的空间大小  // 暂且写死 // 后期优化为动态改变
     private static final int SPACE1MB = 1024 * 1024;
 
@@ -28,8 +30,8 @@ public final class FileOperation {
     /**
      * 传入文件路径，遍历它下面的每一行。根据lambda表达式。并根据语句，进行相应的处理。只读取，不修改语句。（安全）
      *
-     * @param filePath     具体文件的路径
-     * @param findPhotoUrl 筛选函数
+     * @param filePath       具体文件的路径
+     * @param findPhotoUrl   筛选函数
      * @param lineTextHandle 处理函数
      * @return 获取到的文本
      * @throws IOException
@@ -55,8 +57,8 @@ public final class FileOperation {
     /**
      * 传入文件路径，遍历它下面的每一行。根据lambda表达式。并根据语句，进行相应的处理。可能会修改语句。（不安全）
      *
-     * @param filePath     具体文件的路径
-     * @param findPhotoUrl 筛选函数
+     * @param filePath       具体文件的路径
+     * @param findPhotoUrl   筛选函数
      * @param lineTextHandle 处理函数
      * @return 获取到的文本
      * @throws IOException
@@ -290,5 +292,54 @@ public final class FileOperation {
     private static String getFileEncoding(File file) {
         return "UTF-8";
     }
+
+    /**
+     * java计算文件32位的md5值
+     *   结果必定是32位长度
+     *
+     * @param in 输入流
+     * @return
+     */
+    public static String md5HashCode32(InputStream in) {
+        try {
+            //  初始化一个MD5转换器。   //  可以传入参数"SHA-1"或"SHA-256"
+            MessageDigest md = MessageDigest.getInstance("MD5");
+
+            //  分片计算
+            byte[] buffer = new byte[4096];
+            //  判断长度，以此判定结尾。
+            int length = -1;
+            while ((length = in.read(buffer, 0, 4096)) != -1) {
+                md.update(buffer, 0, length);
+            }
+            in.close();
+            //  执行最后的操作（如：填充），完成计算。
+            //  转换并返回包含16个字节的数组，字节元素数值范围为-128~127
+            byte[] md5Bytes = md.digest();
+            StringBuffer hash = new StringBuffer();
+            for (byte md5Byte : md5Bytes) {
+                //  SF: 将byte值转为int类型  无符号
+                //  1. byte 值为-128~127   16位 符号位一位，数据位15位
+                //     & 0xff    16*16 = 256  占16位。
+                //  2. (byte & 0xff) 即，将符号位视为数据位，将byte（1+15数据位）转为16数据位
+                int val = ((int) md5Byte) & 0xff;
+                if (val < 16) {
+                    //  0~ 15
+                    //  填充，保证一个byte得到两位16进制
+                    hash.append("0");
+                }
+                //  16~255 转换为16进制，必定是两位十六进制
+                hash.append(Integer.toHexString(val));
+            }
+            //  返回16进制的字符串
+            return hash.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
 
 }

@@ -12,6 +12,8 @@ import java.util.Properties;
 public class PropertiesOperation {
 
 
+
+
     /**
      * 从项目资源路径中获取配置文件
      *
@@ -43,7 +45,7 @@ public class PropertiesOperation {
             // 从指定路径获取配置文件
             properties.load(new FileInputStream(propertiesPath));
         } catch (IOException e) {
-            System.out.println("配置文件路径无效");
+            System.out.println("配置文件路径无效"+propertiesPath);
             e.printStackTrace();
         }
         return properties;

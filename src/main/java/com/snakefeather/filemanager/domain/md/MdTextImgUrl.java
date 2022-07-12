@@ -12,13 +12,17 @@ import java.util.regex.Pattern;
 
 /**
  * 计划存储Markdown文件读出的信息，之后写入。
+ *  相对地址：![img](photos/535.jpg)
+ *  绝对地址：![image-20220313173812070](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20220313173812070.png)
+ *  网络地址：![img](https://lab.huaweicloud.com/img/tc/sp-im/1519/1567681665-step-1.png)
+ *  ![运行结果](/photos/image-20211221213605502.png)
  */
-public class MdTextURL extends TextDiv {
+public class MdTextImgUrl extends TextDiv implements PhotoMsg {
 
 
     //#region   图片信息
 
-    //   url备注   或  alt信息
+    //   url备注
     private String remark = null;
 
     //   网络地址还是  绝对、相对地址
@@ -30,7 +34,7 @@ public class MdTextURL extends TextDiv {
     private URL photoUrl = null;
     //#endregion
 
-    public MdTextURL(Path filePath, long lineNumber, String originalText) {
+    public MdTextImgUrl(Path filePath, long lineNumber, String originalText) {
         super(filePath, lineNumber, originalText, MsgTypeEnum.URL);
         setOriginalText(originalText);
     }
@@ -103,8 +107,18 @@ public class MdTextURL extends TextDiv {
         return photoPath;
     }
 
-    public URL getPhotoUrl() {
-        return photoUrl;
+    @Override
+    public String getPhotoName() {
+        return null;
+    }
+
+    @Override
+    public String getPhotoSuffix() {
+        return null;
+    }
+    @Override
+    public String getPhotoUrl() {
+        return photoUrl.toString();
     }
 
 

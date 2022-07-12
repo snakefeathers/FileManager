@@ -1,7 +1,7 @@
 package com.snakefeather.filemanager.service.impl;
 
 import com.snakefeather.filemanager.domain.TextDiv;
-import com.snakefeather.filemanager.domain.md.MdTextURL;
+import com.snakefeather.filemanager.domain.md.MdTextImgUrl;
 import com.snakefeather.filemanager.file.FileOperation;
 import com.snakefeather.filemanager.file.FolderOperation;
 import com.snakefeather.filemanager.regex.RegexStore;
@@ -108,7 +108,7 @@ public class MarkdownServiceImpl implements MarkdownService {
                     return Pattern.compile(".*" + RegexStore.PHOTO_URL_EASY + ".*").matcher(textLine).matches();
                 }, lineText -> {
                     if (lineText.matches(".*" + RegexStore.PHOTO_URL + ".*")){     //  二次筛选
-                        urlList.add(new MdTextURL(Paths.get(filePath), number.lineNumber, lineText));
+                        urlList.add(new MdTextImgUrl(Paths.get(filePath), number.lineNumber, lineText));
                     }
                     return "";
                 }
@@ -136,10 +136,10 @@ public class MarkdownServiceImpl implements MarkdownService {
         return urlMap;
     }
 
-    public Map<String, MdTextURL> getPhotoHtmlMap(String filePath) throws IOException {
+    public Map<String, MdTextImgUrl> getPhotoHtmlMap(String filePath) throws IOException {
 
         disposePhotoUrl(filePath);
-        List<MdTextURL> urlList = new ArrayList<>();
+        List<MdTextImgUrl> urlList = new ArrayList<>();
         final LineNumber number = new LineNumber();
         number.lineNumber = 0;
 
@@ -153,13 +153,13 @@ public class MarkdownServiceImpl implements MarkdownService {
                     //   先用最简单的，筛选快一点。      快筛。
                     return Pattern.compile(".*" + RegexStore.PHOTO_HTML + ".*").matcher(textLine).matches();
                 }, lineText -> {
-                    urlList.add(new MdTextURL(Paths.get(filePath), number.lineNumber,  lineText));
+                    urlList.add(new MdTextImgUrl(Paths.get(filePath), number.lineNumber,  lineText));
                     return "";
                 }
         ); //  获取具体文件的所有图片链接
 
-        Map<String, MdTextURL> urlMap = new HashMap<>();
-        for (MdTextURL msg : urlList) {
+        Map<String, MdTextImgUrl> urlMap = new HashMap<>();
+        for (MdTextImgUrl msg : urlList) {
             urlMap.put(msg.getPrimaryText(), msg);
         }
         isCodeChunk = false;

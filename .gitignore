@@ -9,6 +9,16 @@ out
 config
 design
 
+# bootstrap 文件
+src/main/webapp/css
+src/main/webapp/fonts
+src/main/webapp/js
+src/main/webapp/photos
+src/main/webapp/photo_01
+src/main/webapp/lib
+src/main/webapp/plugins
+src/main/webapp/templates
+
 
 
 # 设计图

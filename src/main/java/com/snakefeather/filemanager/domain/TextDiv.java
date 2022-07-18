@@ -41,11 +41,18 @@ public  class TextDiv {
         this.textType = textType;
         this.primaryText = originalText;        //  抽象类就用 原文 来表示 主要信息 。
     }
+    // 装饰器 使用
+    public TextDiv(Path filePath, long lineNumber, String originalText) {
+        this.filePath = filePath;
+        this.lineNumber = lineNumber;
+        this.originalText = originalText;
+        this.primaryText = originalText;        //  抽象类就用 原文 来表示 主要信息 。
+    }
 
     //   信息枚举类型
     public enum MsgTypeEnum {
-        URL,            //  ![img](photos/535.jpg)
-        LABEL_IMG,      //  <img src="photos\依赖倒转原则.png" style="zoom:80%;" />
+        IMG,            //  ![img](photos/535.jpg)
+        LABEL_PHOTO,      //  <img src="photos\依赖倒转原则.png" style="zoom:80%;" />
         CODE,           //  代码块
         ORDINARY;       //  普通文本
     }
@@ -96,6 +103,10 @@ public  class TextDiv {
 
     public String getOriginalText() {
         return originalText;
+    }
+
+    public void setOriginalText(String originalText) {
+        this.originalText = originalText;
     }
 
     public MsgTypeEnum getTextType() {

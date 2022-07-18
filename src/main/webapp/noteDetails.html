@@ -110,7 +110,7 @@
             toolbarAutoFixed: true,
             imageUpload: true,
             imageFormats: ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
-            imageUploadURL: "http://localhost:8080/FileManager/file/photo",	//上传图片控制器Mapping  //SF: 上传地址
+            imageUploadURL: "http://localhost:8080/FileManager/file/photo/save",	//上传图片控制器Mapping  //SF: 上传地址
             //  动态高度
             // autoHeight : true,
             //  禁用部分组合键
@@ -120,7 +120,8 @@
             //  加载完成后的函数
             onload: function () {
 
-
+                console.log("加载一次。");
+                console.log('onload', this);
                 //  键盘快捷键
                 //SF： 设置快捷键
                 var keyMap = {

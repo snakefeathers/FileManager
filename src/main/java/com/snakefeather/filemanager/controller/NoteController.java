@@ -1,8 +1,11 @@
 package com.snakefeather.filemanager.controller;
 
+import com.snakefeather.filemanager.domain.DataCenter;
+import com.snakefeather.filemanager.domain.FileTextList;
 import com.snakefeather.filemanager.domain.Folder;
 import com.snakefeather.filemanager.file.PropertiesOperation;
 import javafx.application.Application;
+import org.apache.log4j.Logger;
 import org.springframework.http.HttpRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +18,7 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
+import java.util.Map;
 import java.util.Properties;
 
 
@@ -23,33 +27,42 @@ import java.util.Properties;
 @RequestMapping("/note")
 public class NoteController {
 
-    @RequestMapping("/test")
-    public ModelAndView index(ModelAndView model) {
-        model.setViewName("note");
-        model.addObject("str", "笔记，测试");
-//        model.addObject("str", new MdTextURL(Paths.get("ww"),1l,"![img](photos/535.jpg)"));
-        return model;
-    }
 
-    @RequestMapping("/show")
+    private Logger logger = Logger.getLogger(this.getClass().getName());
+
+    /**
+     * 显示笔记列表
+     *
+     * @param modelAndView
+     * @param request
+     * @return
+     */
+    @RequestMapping("/list")
     public ModelAndView noteIndex(ModelAndView modelAndView, HttpServletRequest request) {
         // 获取数据
-        PropertiesOperation pro = new PropertiesOperation();
-        Properties properties = pro.getPropertiesByAbso("E:\\0z_SnakeFeatherObject\\FileManager\\config\\defult.properties");
-        Folder folder = new Folder(properties.getProperty("folderPath"));
-        modelAndView.addObject("folder", folder.getChildFolder());
-        modelAndView.addObject("files", folder.getChildFile());
+        Map<String, FileTextList> fileMap = DataCenter.getFileMap();
+//        modelAndView.addObject("folder", folder.getChildFolder());
+//        modelAndView.addObject("files", folder.getChildFile());
         modelAndView.setViewName("note");
         return modelAndView;
     }
 
+    /**
+     * 笔记展示
+     *
+     * @param modelAndView
+     * @param mdId         必要的。   指定文件ID
+     * @return
+     */
     @RequestMapping("/details/{mdId}/show")
     public ModelAndView noteDetails(ModelAndView modelAndView, @PathVariable Integer mdId) {
-        System.out.println("mdId:" + mdId);
-        // 获取数据
+        logger.debug("|NoteController：获取笔记内容。" + "\t|笔记ID：" + mdId);
+        // 从配置文件中获取到目标路径
         PropertiesOperation pro = new PropertiesOperation();
         Properties properties = pro.getPropertiesByAbso("E:\\0z_SnakeFeatherObject\\FileManager\\config\\defult.properties");
+        //  此处文件初始化时会扫描路径。   //  后期可优化为单例模式。 不过，在间隔一段时间或一定访问量后，会刷新一下。
         Folder folder = new Folder(properties.getProperty("folderPath"));
+
         modelAndView.addObject("folder", folder.getChildFolder());
         modelAndView.addObject("files", folder.getChildFile());
         StringBuffer sb = new StringBuffer();
@@ -58,7 +71,6 @@ public class NoteController {
             while ((s = br.readLine()) != null) {
                 sb.append(s);
                 sb.append("\n");
-                System.out.println(s);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -75,20 +87,18 @@ public class NoteController {
      * 修改md文件
      *
      * @param modelAndView
-     * @param mdId         目的md文件的hash值
+     * @param mdId         目的md文件的id
      * @param mdText       md文件的所有内容（源码）
      * @return 是否成功
      */
     @RequestMapping("/details/{mdId}/updateAll")
     @ResponseBody
     public boolean noteDetailsUpdate(ModelAndView modelAndView, @PathVariable Integer mdId, @RequestParam(value = "mdText", required = false) String mdText) {
-        System.out.println("mdId:" + mdId);
-        System.out.println(mdText);
+        logger.debug("|NoteController：修改笔记内容。" + "\t|笔记ID：" + mdId);
+        logger.debug("|笔记内容：" + mdText);
+
         modelAndView.addObject("is", true);
         modelAndView.setViewName("noteDetails");
-//        List<Boolean> list = new ArrayList<>();
-//        list.add(true);
-//        return list;
         return true;
     }
 

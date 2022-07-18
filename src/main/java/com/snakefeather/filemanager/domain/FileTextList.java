@@ -1,6 +1,7 @@
 package com.snakefeather.filemanager.domain;
 
 import com.snakefeather.filemanager.domain.md.MdTextCode;
+import com.snakefeather.filemanager.file.FileOperation;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -22,10 +23,10 @@ public class FileTextList extends LinkedList<TextDiv> {
     private String fileName;
     //  文件大小
     private float capacity;
+    //  通过md加密计算出来的文件id
+    private String fileId;
 
-    private int fileId;
-
-
+    //  用于格式化 文件大小 单位Kb
     private static final DecimalFormat df = new DecimalFormat("#0.00");
 
 
@@ -37,50 +38,54 @@ public class FileTextList extends LinkedList<TextDiv> {
         this.path = Paths.get(file.getAbsolutePath());
         fileName = file.getName();
         capacity = new Float(df.format(file.length() / 1024.0));
-        read(file.getAbsolutePath());
-        fileId = hashCode();
+        setFileId();        //  计算文件ID
     }
 
+    public void read(){
+        read(path.toString());
+    }
     public void read(String fileName) {
         // 用于处理代码块的临时变量
         MdTextCode codePiece = null;
         // 标志处于代码块中
         boolean isCode = false;
         //  行号
-        long lineNumber = 1;
+        long lineCount = 1;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String str = new String();
             while ((str = reader.readLine()) != null) {
-                // 代码块 单独拎出来处理
-//                if (str.matches("```.*")) {
-//                    isCode = !isCode;
-//                    if (isCode) {
-//                        //  代码块
-//                        if (codePiece == null) {
-//                            //  代码块开头   初始化代码块对象
-//                            codePiece = new MdTextCode(path, lineCount++, str, TextDiv.MsgTypeEnum.CODE);
-//                        } else {
-//                            // 代码块中间    直接加文本就行
-//                            lineCount++;
-//                            codePiece.add(str);
-//                        }
-//                    } else {
-//                        //  代码块 结尾
-//                        // 将代码块对象添加到列表中。
-//                        lineCount++;
-//                        add(codePiece);
-//                        codePiece = null;
-//                    }
-//                } else {
-                add(TextDivs.getTextDivByStr(path, lineNumber++, str));
-//                }
+//                 代码块 单独拎出来处理
+                if (str.matches("```.*") || isCode) {
+                    isCode = !isCode;
+                    if (isCode) {
+                        //  代码块
+                        if (codePiece == null) {
+                            //  代码块开头   初始化代码块对象
+                            codePiece = new MdTextCode(path, lineCount++, str);
+                        } else {
+                            // 代码块中间    直接加文本就行
+                            lineCount++;
+                            // 调用代码块的add()方法
+                            codePiece.add(str);
+                        }
+                    } else {
+                        //  代码块 结尾
+                        // 将代码块对象添加到列表中。
+                        codePiece.add(str);
+                        lineCount++;
+                        add(codePiece);
+                        codePiece = null;
+                    }
+                } else {
+                    add(TextDivs.getTextDivByStr(path, lineCount++, str));
+                }
             }
         } catch (FileNotFoundException e) {
-            System.out.println("加载文件异常" + fileName);
+            System.out.println("找不到该文件：" + fileName);
             e.printStackTrace();
         } catch (IOException e) {
-            System.out.println("加载文件异常" + fileName);
+            System.out.println("加载文件异常：" + fileName);
             e.printStackTrace();
         }
     }
@@ -105,6 +110,15 @@ public class FileTextList extends LinkedList<TextDiv> {
 
     }
 
+    //  设置文件Id  //  修改文件时有可能修改。  //  虽然文件几乎是整个替换（删除，添加），没有修改的说法。还是加一个意思一下。
+    public void setFileId() {
+        File file = new File(path.toString());
+        try {
+            this.fileId = FileOperation.md5HashCode32(new FileInputStream(file));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 
     public Path getPath() {
         return path;
@@ -130,7 +144,7 @@ public class FileTextList extends LinkedList<TextDiv> {
         this.capacity = capacity;
     }
 
-    public int getFileId() {
+    public String getFileId() {
         return fileId;
     }
 }

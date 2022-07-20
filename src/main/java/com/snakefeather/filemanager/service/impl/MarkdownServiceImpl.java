@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -35,7 +37,8 @@ public class MarkdownServiceImpl implements MarkdownService {
      * @param folderPath
      * @return
      */
-    private Map<String, Path> getAllMd(String folderPath) {
+    @Override
+    public Map<String, Path> getAllMd(String folderPath) {
         Map<String, Path> fileMap = null;                 //  存储所有的文件 Map<文件名，绝对地址>
         try {
             //  获取到所有的md文件
@@ -117,7 +120,7 @@ public class MarkdownServiceImpl implements MarkdownService {
                 }, lineText -> {
                     TextDiv textDiv = new TextDiv(path, number.lineNumber, lineText);
                     PhotoMsg photoMsg = PhotoMsgs.tryGetPhotoMsg(lineText);
-                    if (photoMsg != null){
+                    if (photoMsg != null) {
                         photoMsg.decorate(textDiv);
                         photoList.add(photoMsg);
                     }
@@ -127,11 +130,18 @@ public class MarkdownServiceImpl implements MarkdownService {
 
         Map<String, PhotoMsg> urlMap = new HashMap<>();
         for (PhotoMsg msg : photoList) {
+//            if (urlMap.containsKey(msg.getPhotoName())) {
+//                TextDiv textDiv = (TextDiv) msg;
+//                System.out.println("重复的图片：" + msg.getPhotoName());
+//                System.out.println("\t\t所属文件：" + textDiv.getFilePath().toString());
+//                System.out.println("\t\t行   号：" + textDiv.getLineNumber());
+//            }
             urlMap.put(msg.getPhotoName(), msg);
         }
         isCodeChunk = false;
         return urlMap;
     }
+
 
     @Override
     public Map<String, PhotoMsg> getAllPhotoMsgMap(String folderPath) throws IOException {
@@ -146,6 +156,27 @@ public class MarkdownServiceImpl implements MarkdownService {
         }
         return urlMap;
     }
+
+    @Override
+    public Map<String, PhotoMsg> getAllPhotoMsgMspRW(List<FileTextList> fileLists) {
+        Map<String, PhotoMsg> photoMap = new HashMap<>();
+        for (FileTextList fileList : fileLists){
+            fileList.read();
+            // 筛选出 PhotoMsg类性
+            fileList.stream().filter(textDiv ->
+                    textDiv.getTextType() == TextDiv.MsgTypeEnum.IMG || textDiv.getTextType() == TextDiv.MsgTypeEnum.LABEL_PHOTO
+            ).forEach(new Consumer<TextDiv>() {
+                @Override
+                public void accept(TextDiv textDiv) {
+                    // 添加
+                    PhotoMsg photoMsg = (PhotoMsg)textDiv;
+                    photoMap.put(photoMsg.getPhotoName(),photoMsg);
+                }
+            });
+        }
+        return photoMap;
+    }
+
 
     //#endregion
 
@@ -188,15 +219,14 @@ public class MarkdownServiceImpl implements MarkdownService {
     //#endregion
 
 
-
-
     @Override
     public boolean removeInvalidImages(String targetPath, String mirrorPath) throws IOException {
         Map<String, Path> surplusPhotoMap = surplusPhotos(targetPath, targetPath);
         for (Path photoPath : surplusPhotoMap.values()) {
+            // 复制文件
             FileOperation.copyFile(photoPath.toString(), mirrorPath);
-            System.out.println("移除文件：" + photoPath);
             File file = photoPath.toFile();
+            // 删除原文件
             file.delete();
         }
         return true;
@@ -206,6 +236,7 @@ public class MarkdownServiceImpl implements MarkdownService {
     public void updatePhotoPathByFile(String fileName, String photoPath) {
         FileTextList fileTextList = new FileTextList(fileName);
         fileTextList.read();
+        //  找出md文件中  所有的图片链接
         List<TextDiv> textDivs = fileTextList.stream().filter(textDiv -> {
             return textDiv.getTextType() == TextDiv.MsgTypeEnum.IMG || textDiv.getTextType() == TextDiv.MsgTypeEnum.LABEL_PHOTO;
         }).collect(Collectors.toList());
@@ -216,15 +247,45 @@ public class MarkdownServiceImpl implements MarkdownService {
                 return l == 0 ? 0 : l > 0 ? 1 : -1;
             }
         });
+        //  修改图片 路径
         for (TextDiv textDiv : textDivs) {
             int ind = fileTextList.indexOf(textDiv);
             PhotoMsg photoMsg = (PhotoMsg) textDiv;
             PhotoMsgs.updateFolderPath(photoMsg, photoPath);
-            fileTextList.set(ind,textDiv);
+            fileTextList.set(ind, textDiv);
         }
         fileTextList.write();
     }
 
+    @Override
+    public void replenishPhoto(String noteFolder, String photoFolder, String... photoPaths) {
+//        Map<String, PhotoMsg> addPhotoMap = new HashMap<>();
+        try {
+            //  1.找出缺少的图片  //获取 多余 链接    缺少图片的链接
+            Map<String, PhotoMsg> suplusMap = surplusPhotoMsg(noteFolder, photoFolder);
+            for (String photoPath : photoPaths) {
+                // 2.读取到可补充的图片   // 获取 实际图片隐射
+                Map<String, Path> photoMap = FolderOperation.getAllFileBySuffix(photoPath, RegexStore.PHOTO);
+                for (String photoName : photoMap.keySet()) {
+                    if (suplusMap.containsKey(photoName)) {
+                        // 3. 挑出可补充的，准备进行补充   //对比，可以补充的图片
+//                        addPhotoMap.put(photoName,suplusMap.get(photoName));
+                        // 3. 挑出可补充的，  直接进行补充
+                        File file = new File(photoMap.get(photoName).toString());
+                        file.renameTo(new File(photoFolder + File.separator + photoName));
+                    }
+                }
+            }
+        } catch (FileNotFoundException e) {
+            throw new NullPointerException("MarkdownServiceImpl | addPhoto:找不到文件"
+                    + "\n\t\t文件路径: " + noteFolder
+                    + "图片路径：" + photoFolder
+                    + "图片来源：" + Arrays.toString(photoPaths));
+        } catch (IOException e) {
+            System.out.println("MarkdownServiceImpl | addPhoto:IO异常");
+            e.printStackTrace();
+        }
+    }
 
 
     //  行号 lambda表达式不能传递变量。   使用常量对象，传递一下。

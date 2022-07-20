@@ -3,6 +3,8 @@ package com.snakefeather.filemanager.domain.md;
 import com.snakefeather.filemanager.domain.TextDiv;
 
 import java.nio.file.Path;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * markdown 中，从以下格式信息中，提取出需要的信息。
@@ -24,27 +26,25 @@ import java.nio.file.Path;
 public interface PhotoMsg {
 
 
-    //   保证有：  folderPath fileName
-    //  获取图片名
-    String getPhotoName();
+    //#region  getter() setter()  图片名  图片路径  图片路径类型   注释
 
-    //  修改图片名   // 注：是关联修改，修改链接的同时，会修改对应的图片
+    //  修改、获取   图片名  // 注：是关联修改，修改链接的同时，会修改对应的图片
+    String getPhotoName();
     void setPhotoName(String fileName);
 
-    // 获取图片路径
+    // 获取、修改 图片路径   // 所有文件的图片路径为统一种类。（绝对、相对、网络中的一种。） // 修改时不用同时考虑三种情况下的修改。
     String getPhotoPath();
-
-    // 修改图片路径  // 所有文件的图片路径为统一种类。（绝对、相对、网络中的一种。） // 修改时不用同时考虑三种情况下的修改。
     void setPhotoPath(String folderPath);
 
     //  获取、修改 图片路径类型
     PathType getPathType();
-
     void setPathType(PathType pathType);
 
+    //  获取、修改 注释
     String getRemark();
-
     void setRemark(String remark);
+
+    //#endregion
 
     //  装饰
     void decorate(TextDiv textDiv);

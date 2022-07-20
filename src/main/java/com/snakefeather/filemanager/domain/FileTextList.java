@@ -55,28 +55,19 @@ public class FileTextList extends LinkedList<TextDiv> {
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String str = new String();
             while ((str = reader.readLine()) != null) {
-//                 代码块 单独拎出来处理
-                if (str.matches("```.*") || isCode) {
-                    isCode = !isCode;
-                    if (isCode) {
-                        //  代码块
-                        if (codePiece == null) {
-                            //  代码块开头   初始化代码块对象
-                            codePiece = new MdTextCode(path, lineCount++, str);
-                        } else {
-                            // 代码块中间    直接加文本就行
-                            lineCount++;
-                            // 调用代码块的add()方法
-                            codePiece.add(str);
-                        }
-                    } else {
-                        //  代码块 结尾
-                        // 将代码块对象添加到列表中。
+                //   代码块 单独拎出来处理
+                if (str.matches("```.*")) {
+                    //  代码块开头   初始化代码块对象
+                    codePiece = new MdTextCode(path, lineCount++, str);
+                    while( (str = reader.readLine())!=null){
                         codePiece.add(str);
                         lineCount++;
-                        add(codePiece);
-                        codePiece = null;
+                        if (str.matches("```.*")){
+                            break;
+                        }
                     }
+                    //   不管是 break  还是(str == null) 都要将代码块添加。
+                    add(codePiece);
                 } else {
                     add(TextDivs.getTextDivByStr(path, lineCount++, str));
                 }

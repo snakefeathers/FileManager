@@ -1,12 +1,23 @@
 package com.snakefeather.filemanager.domain.md;
 
+import com.snakefeather.filemanager.domain.FileTextList;
 import com.snakefeather.filemanager.domain.TextDiv;
+import com.snakefeather.filemanager.file.FileOperation;
+import com.snakefeather.filemanager.file.FolderOperation;
 import com.snakefeather.filemanager.regex.RegexStore;
+import com.snakefeather.filemanager.service.impl.MarkdownServiceImpl;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class PhotoMsgs {
 
@@ -208,14 +219,15 @@ public class PhotoMsgs {
     /**
      * 获取 对应类型的正则  Pattern对象
      *
-     * @param photoMsg
+     * @param textType 文本类型：
+     *                 (MdTextImg: IMG )
+     *                 ( MdTextLabelPhoto :  LABEL_PHOTO )
+     * @param pathType 路径类型： PhotoMsg.PathType
+     *                 WEB, ABSOLUTE, RELATIVE
      * @return
      */
-    public static Pattern getPhotoMsgPattern(PhotoMsg photoMsg) {
-        TextDiv textDiv = (TextDiv) photoMsg;
-        PhotoMsg.PathType pathType = null;
-        Matcher matcher = null;
-        if (textDiv.getTextType() == TextDiv.MsgTypeEnum.IMG) {
+    public static Pattern getPhotoMsgPattern(TextDiv.MsgTypeEnum textType, PhotoMsg.PathType pathType) {
+        if (textType == TextDiv.MsgTypeEnum.IMG) {
             if (pathType == PhotoMsg.PathType.WEB) {
                 return pImgWeb;
             } else if (pathType == PhotoMsg.PathType.ABSOLUTE) {
@@ -250,8 +262,7 @@ public class PhotoMsgs {
     public static PhotoMsg updateFolderPath(PhotoMsg photoMsg, String folderPath) {
         TextDiv textDiv = (TextDiv) photoMsg;
         String originalText = textDiv.getOriginalText();
-        System.out.println("修改内容：" + originalText);
-        Matcher matcher = getPhotoMsgPattern(photoMsg).matcher(originalText);
+        Matcher matcher = getPhotoMsgPattern(textDiv.getTextType(), photoMsg.getPathType()).matcher(originalText);
         matcher.matches();
 
         //  获取到捕获数组的边界
@@ -262,7 +273,6 @@ public class PhotoMsgs {
         //  修改对象
         textDiv.setOriginalText(text);
         photoMsg.setPhotoPath(folderPath);
-        System.out.println("\t\t\t\t修改结果：" + text);
         return photoMsg;
     }
 
@@ -276,8 +286,8 @@ public class PhotoMsgs {
     public static PhotoMsg updatePhotoName(PhotoMsg photoMsg, String fileName) {
         TextDiv textDiv = (TextDiv) photoMsg;
         String originalText = textDiv.getOriginalText();
-        Matcher matcher = getPhotoMsgPattern(photoMsg).matcher(originalText);
-
+        Matcher matcher = getPhotoMsgPattern(textDiv.getTextType(), photoMsg.getPathType()).matcher(originalText);
+        matcher.matches();
         //  获取到捕获数组的边界
         int start = matcher.start("fileName");
         int end = matcher.end("fileName");
@@ -304,11 +314,13 @@ public class PhotoMsgs {
         int start, end;
 
         if (textDiv.getTextType() == TextDiv.MsgTypeEnum.IMG) {
-            Matcher matcher = getPhotoMsgPattern(photoMsg).matcher(originalText);
+            Matcher matcher = getPhotoMsgPattern(textDiv.getTextType(), photoMsg.getPathType()).matcher(originalText);
+            matcher.matches();
             start = matcher.start("remark");
             end = matcher.end("remark");
         } else {
             Matcher matcher = Pattern.compile(".*" + RegexStore.ALT_PHOTO_LABEL + ".*").matcher(originalText);
+            matcher.matches();
             start = matcher.start("alt");
             end = matcher.end("alt");
         }
@@ -323,5 +335,86 @@ public class PhotoMsgs {
 
 
     //#endregion
+
+
+    /**
+     * 修改图片名  （批量操作） （针对文件）（关联修改 （图片链接：实际图片））
+     *
+     * @param fileName   指定md文件
+     * @param folderPath 指定图片目录
+     */
+    public static void renamePhotoAndURL(String fileName, String folderPath) throws IOException {
+        MarkdownServiceImpl markdownService = new MarkdownServiceImpl();
+        FileTextList fileTextList = new FileTextList(fileName);
+        List<FileTextList> fileList = new LinkedList<>();
+        fileList.add(fileTextList);
+
+        //  1. 图片链接  筛选出来指定文件中所有的PhotoMsg
+        Map<String, PhotoMsg> urlMap = markdownService.getAllPhotoMsgMspRW(fileList);
+        //  2. 找到实际所有的图片     实际存在的图片 Map<图片名，绝对地址>
+        Map<String, Path> photoMap = FolderOperation.getAllFileBySuffix(folderPath, RegexStore.PHOTO);
+        //  3. 进行匹配  找到一一对应的图片
+        List<String> photoExist = urlMap.entrySet().stream()
+                .filter(url -> photoMap.containsKey(url.getKey()))
+                .map(url -> url.getKey())
+                .collect(Collectors.toList());
+        //  4. 修改图片名
+        for (String photoName : photoExist) {
+
+            String newName = FileOperation.md5HashCode32(new FileInputStream(photoMap.get(photoName).toString()));
+            String suffix = photoName.substring(photoName.lastIndexOf("."));    // 截取后缀
+            //  新的图片名
+            newName += suffix;
+            // 修改 图片链接中的 图片名
+            updatePhotoName((PhotoMsg) urlMap.get(photoName), newName);
+            // 修改实际的图片的  图片名
+            File file = new File(photoMap.get(photoName).toString());
+            newName = Paths.get(file.getAbsolutePath()).getParent().toString() + File.separator + newName;
+            file.renameTo(new File(newName));
+        }
+        fileTextList.write();
+    }
+
+    /**
+     * 修改图片名  （批量操作） （针对文件夹）
+     *
+     * @param noteFolder
+     * @param photoFolder
+     * @throws IOException
+     */
+    public static void renameAllPhotoAndURL(String noteFolder, String photoFolder) throws IOException {
+        MarkdownServiceImpl markdownService = new MarkdownServiceImpl();
+        List<FileTextList> fileList = new LinkedList<>();
+        for (Path filePath : markdownService.getAllMd(noteFolder).values()) {
+            fileList.add(new FileTextList(filePath.toString()));
+        }
+
+        //  1. 图片链接  筛选出来指定文件中所有的PhotoMsg
+        Map<String, PhotoMsg> urlMap = markdownService.getAllPhotoMsgMspRW(fileList);
+        //  2. 找到实际所有的图片     实际存在的图片 Map<图片名，绝对地址>
+        Map<String, Path> photoMap = FolderOperation.getAllFileBySuffix(photoFolder, RegexStore.PHOTO);
+        //  3. 进行匹配  找到一一对应的图片
+        List<String> photoExist = urlMap.entrySet().stream()
+                .filter(url -> photoMap.containsKey(url.getKey()))
+                .map(url -> url.getKey())
+                .collect(Collectors.toList());
+        //  4. 修改图片名
+        for (String photoName : photoExist) {
+
+            String newName = FileOperation.md5HashCode32(new FileInputStream(photoMap.get(photoName).toString()));
+            String suffix = photoName.substring(photoName.lastIndexOf("."));    // 截取后缀
+            //  新的图片名
+            newName += suffix;
+            // 修改 图片链接中的 图片名
+            updatePhotoName((PhotoMsg) urlMap.get(photoName), newName);
+            // 修改实际的图片的  图片名
+            File file = new File(photoMap.get(photoName).toString());
+            newName = Paths.get(file.getAbsolutePath()).getParent().toString() + File.separator + newName;
+            file.renameTo(new File(newName));
+        }
+        for (FileTextList file : fileList) {
+            file.write();
+        }
+    }
 
 }

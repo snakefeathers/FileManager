@@ -47,7 +47,7 @@ public class RegexStore {
             photo.append(FOLDER);
             photo.append("\\.");
             photo.append("(");
-            photo.append("jpg").append("|png").append("|jpeg");
+            photo.append("jpg").append("|png").append("|gif").append("|gIf").append("|jpeg");
             photo.append(")");
 
             return photo.toString();

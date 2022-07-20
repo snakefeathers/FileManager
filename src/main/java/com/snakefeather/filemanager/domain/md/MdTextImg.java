@@ -67,6 +67,7 @@ public class MdTextImg extends TextDiv implements PhotoMsg {
      * @param originalText
      */
     public void setOriginalText(String originalText) {
+        this.originalText = originalText;
 //        this.originalText = originalText;
 //        //   正则匹配
 //        Matcher matcher = Pattern.compile(".*" + RegexStore.EASY_PHOTO_IMG + ".*").matcher(originalText);
@@ -127,7 +128,7 @@ public class MdTextImg extends TextDiv implements PhotoMsg {
 
     @Override
     public void setPhotoPath(String folderPath) {
-
+        this.folderPath = folderPath;
     }
 
     @Override

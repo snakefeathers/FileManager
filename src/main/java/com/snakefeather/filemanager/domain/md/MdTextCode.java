@@ -25,7 +25,7 @@ public class MdTextCode extends TextDiv {
     }
 
     public void add(String str) {
-        childs.add(new TextDiv(super.filePath, ++endLineCount, originalText));
+        childs.add(new TextDiv(super.filePath, ++endLineCount, str));
     }
 
 

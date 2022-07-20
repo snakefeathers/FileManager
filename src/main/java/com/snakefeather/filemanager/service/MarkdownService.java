@@ -17,24 +17,39 @@ public interface MarkdownService {
 
 
     /**
-     * 文件里的图片链接
-     * 找出MD文件中所有的图片名
+     *  读取文件夹 获取到所有的 md文件的映射
+     * @param folderPath
+     * @return
+     */
+    Map<String, Path> getAllMd(String folderPath);
+
+    /**
+     * 获取文件里的图片链接 （只读操作）
+     * 找出MD文件中所有的图片名 （只适合读，不适合修改）
      *
      * @param filePath
      * @return
      * @throws IOException
      */
-    public Map<String, PhotoMsg> getPhotoMsgMap(String filePath) throws IOException;
+    Map<String, PhotoMsg> getPhotoMsgMap(String filePath) throws IOException;
 
     /**
-     * 文件夹下的 所有文件 里的 图片链接
+     * 获取文件夹下的 所有文件 里的 图片链接 （只读操作）
      * 传入一个文件夹，扫描所有MD文件，获取所有的URL地址。
      *
      * @param folderPath
      * @return
      * @throws IOException
      */
-    public Map<String, PhotoMsg> getAllPhotoMsgMap(String folderPath) throws IOException;
+    Map<String, PhotoMsg> getAllPhotoMsgMap(String folderPath) throws IOException;
+
+    /**
+     *   获取文件里的图片链接  （读写操作）
+     *   根据自定义的File类型，获取其中所有的 PhotoMsg对象
+     * @param fileLists
+     * @return
+     */
+    Map<String,PhotoMsg> getAllPhotoMsgMspRW(List<FileTextList> fileLists);
 
 
     /**
@@ -47,7 +62,7 @@ public interface MarkdownService {
      * @return 多余的图片的Map  Map<图片名，绝对路径>
      * @throws IOException
      */
-    public Map<String, Path> surplusPhotos(String folderPath, String photoFolderPath) throws IOException;
+    Map<String, Path> surplusPhotos(String folderPath, String photoFolderPath) throws IOException;
 
     /**
      * 返回多余的图片链接   反过来就是  返回缺少的图片
@@ -58,7 +73,7 @@ public interface MarkdownService {
      * @return 多余的图片链接
      * @throws IOException
      */
-    public Map<String, PhotoMsg> surplusPhotoMsg(String folderPath, String photoFolderPath) throws IOException;
+    Map<String, PhotoMsg> surplusPhotoMsg(String folderPath, String photoFolderPath) throws IOException;
 
 
     /**
@@ -70,13 +85,23 @@ public interface MarkdownService {
      * @param mirrorPath 镜像路径，会将无效图片与映射文件放在这个目录
      * @return
      */
-    public boolean removeInvalidImages(String targetPath, String mirrorPath) throws IOException;
+    boolean removeInvalidImages(String targetPath, String mirrorPath) throws IOException;
 
     /**
-     *   修改 图片文件夹
-     *   修改指定md文件中，所有图片链接
+     * 修改 所有图片链接的 图片路径 （批量操作）
+     * 修改指定md文件中  所有图片链接中的 图片路径
+     *
      * @param fileName
      * @param photoPath
      */
-    public void updatePhotoPathByFile(String fileName, String photoPath);
+    void updatePhotoPathByFile(String fileName, String photoPath);
+
+    /**
+     * 补充图片
+     * @param folder        指定md文件目录
+     * @param targetPath    图片目标路径
+     * @param photoPaths    图片来源路径
+     * @return
+     */
+    void replenishPhoto(String folder,String targetPath,String... photoPaths);
 }

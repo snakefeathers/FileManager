@@ -29,6 +29,8 @@ public  class TextDiv {
     protected List<TextDiv> childs = new ArrayList<>();
     //   父类引用   //  存储父类的引用
     protected TextDiv parent = null;
+    //   容器的引用
+    protected FileTextList fileList = null;
     //   占几行
     protected int lineCount = 0;
 
@@ -36,6 +38,14 @@ public  class TextDiv {
 
     public TextDiv(Path filePath, long lineNumber, String originalText, MsgTypeEnum textType) {
         this.filePath = filePath;
+        this.lineNumber = lineNumber;
+        this.originalText = originalText;
+        this.textType = textType;
+        this.primaryText = originalText;        //  抽象类就用 原文 来表示 主要信息 。
+    }
+    public TextDiv(Path filePath,  FileTextList fileList ,long lineNumber, String originalText, MsgTypeEnum textType) {
+        this.filePath = filePath;
+        this.fileList = fileList;
         this.lineNumber = lineNumber;
         this.originalText = originalText;
         this.textType = textType;
@@ -128,6 +138,11 @@ public  class TextDiv {
     public int getLineCount() {
         return lineCount;
     }
+
+    public FileTextList getFileList() {
+        return fileList;
+    }
+
 
     @Override
     public String toString() {

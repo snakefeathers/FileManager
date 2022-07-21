@@ -23,6 +23,8 @@ public interface MarkdownService {
      */
     Map<String, Path> getAllMd(String folderPath);
 
+    List<FileTextList> getAllMdFileList(String folderPath);
+
     /**
      * 获取文件里的图片链接 （只读操作）
      * 找出MD文件中所有的图片名 （只适合读，不适合修改）
@@ -52,6 +54,8 @@ public interface MarkdownService {
     Map<String,PhotoMsg> getAllPhotoMsgMspRW(List<FileTextList> fileLists);
 
 
+
+
     /**
      * 返回实际多余的图片
      * 比对图片链接：传入MD文件读取到的图片链接和实际拥有的图片，返回实际多余的图片。（排除无效图片）
@@ -62,7 +66,7 @@ public interface MarkdownService {
      * @return 多余的图片的Map  Map<图片名，绝对路径>
      * @throws IOException
      */
-    Map<String, Path> surplusPhotos(String folderPath, String photoFolderPath) throws IOException;
+    Map<String, Path> surplusPhotos(String folderPath, String photoFolderPath) ;
 
     /**
      * 返回多余的图片链接   反过来就是  返回缺少的图片
@@ -73,7 +77,14 @@ public interface MarkdownService {
      * @return 多余的图片链接
      * @throws IOException
      */
-    Map<String, PhotoMsg> surplusPhotoMsg(String folderPath, String photoFolderPath) throws IOException;
+    Map<String, PhotoMsg> surplusPhotoMsg(String folderPath, String photoFolderPath);
+
+    /**
+     *  返回多余的图片链接 （读写操作）
+     * @param fileLists
+     * @return
+     */
+    Map<String, PhotoMsg> surplusPhotoMsgRW(List<FileTextList> fileLists, String photoFolderPath);
 
 
     /**
@@ -88,6 +99,16 @@ public interface MarkdownService {
     boolean removeInvalidImages(String targetPath, String mirrorPath) throws IOException;
 
     /**
+     *  移出多余的链接 （批量操作）
+     * @param fileLists 目标md文件
+     * @param photoPath 图片文件夹
+     * @return
+     * @throws IOException
+     */
+    boolean removeAllInvalidPhotoMsg(List<FileTextList> fileLists, String photoPath);
+
+
+    /**
      * 修改 所有图片链接的 图片路径 （批量操作）
      * 修改指定md文件中  所有图片链接中的 图片路径
      *
@@ -97,11 +118,18 @@ public interface MarkdownService {
     void updatePhotoPathByFile(String fileName, String photoPath);
 
     /**
+     *  关联指定链接和图片
+     * @param photoMsg  图片链接
+     * @param photoPath  图片具体路径
+     */
+    void relevancyUrlAndPhoto(PhotoMsg photoMsg,Path photoPath);
+
+    /**
      * 补充图片
      * @param folder        指定md文件目录
      * @param targetPath    图片目标路径
      * @param photoPaths    图片来源路径
      * @return
      */
-    void replenishPhoto(String folder,String targetPath,String... photoPaths);
+    Map<String,PhotoMsg> replenishPhoto(String folder,String targetPath,String... photoPaths);
 }

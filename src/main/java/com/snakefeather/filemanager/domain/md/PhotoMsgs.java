@@ -303,10 +303,10 @@ public class PhotoMsgs {
      * 修改图片 备注
      *
      * @param photoMsg
-     * @param fileName
+     * @param remark
      * @return
      */
-    public static PhotoMsg updatePhotoRemark(PhotoMsg photoMsg, String fileName) {
+    public static PhotoMsg updatePhotoRemark(PhotoMsg photoMsg, String remark) {
         TextDiv textDiv = (TextDiv) photoMsg;
         String originalText = textDiv.getOriginalText();
 
@@ -326,10 +326,36 @@ public class PhotoMsgs {
         }
 
         //  修改内容
-        String text = originalText.substring(0, start) + fileName + originalText.substring(end);
+        String text = originalText.substring(0, start) + remark + originalText.substring(end);
         //  修改对象
         textDiv.setOriginalText(text);
-        photoMsg.setRemark(fileName);
+        photoMsg.setRemark(remark);
+        return photoMsg;
+    }
+
+    /**
+     *  修改 路径+ 图片名
+     *   一起修改
+     * @param photoMsg
+     * @param fullPath
+     * @return
+     */
+    public static PhotoMsg updatePhotoFullUrl(PhotoMsg photoMsg, String fullPath) {
+        TextDiv textDiv = (TextDiv) photoMsg;
+        String originalText = textDiv.getOriginalText();
+
+        //  获取到捕获数组的边界
+        Matcher matcher = getPhotoMsgPattern(textDiv.getTextType(), photoMsg.getPathType()).matcher(originalText);
+        matcher.matches();
+        int start = matcher.start("folderPath");
+        int end = matcher.end("fileName");
+
+        //  修改内容
+        String text = originalText.substring(0, start) + fullPath + originalText.substring(end);
+        //  修改对象
+        textDiv.setOriginalText(text);
+        photoMsg.setPhotoPath(matcher.group("folderPath"));
+        photoMsg.setPhotoName(matcher.group("fileName"));
         return photoMsg;
     }
 

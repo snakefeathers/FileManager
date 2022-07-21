@@ -168,7 +168,7 @@ public final class FileOperation {
      * @param folderPath 目标路径
      * @return 操作是否成功
      */
-    public static boolean copyFile(String filePath, String folderPath) {
+    public static String copyFile(String filePath, String folderPath) {
         return copyFile(filePath, folderPath, null);
     }
 
@@ -182,7 +182,7 @@ public final class FileOperation {
      * @param fileName   目标文件名
      * @return 操作是否成功
      */
-    public static boolean copyFile(String filePath, String folderPath, String fileName) {
+    public static String copyFile(String filePath, String folderPath, String fileName) {
         File file = new File(filePath);
         File folder = new File(folderPath);
 
@@ -243,7 +243,7 @@ public final class FileOperation {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return true;
+        return newFile.getAbsolutePath();
     }
     //#endregion
 

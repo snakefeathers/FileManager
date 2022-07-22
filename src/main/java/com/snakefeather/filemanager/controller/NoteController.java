@@ -4,18 +4,14 @@ import com.snakefeather.filemanager.domain.DataCenter;
 import com.snakefeather.filemanager.domain.FileTextList;
 import com.snakefeather.filemanager.domain.Folder;
 import com.snakefeather.filemanager.file.PropertiesOperation;
-import javafx.application.Application;
 import org.apache.log4j.Logger;
-import org.springframework.http.HttpRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.util.Map;
@@ -61,7 +57,7 @@ public class NoteController {
         PropertiesOperation pro = new PropertiesOperation();
         Properties properties = pro.getPropertiesByAbso("E:\\0z_SnakeFeatherObject\\FileManager\\config\\defult.properties");
         //  此处文件初始化时会扫描路径。   //  后期可优化为单例模式。 不过，在间隔一段时间或一定访问量后，会刷新一下。
-        Folder folder = new Folder(properties.getProperty("folderPath"));
+        Folder folder = new Folder(properties.getProperty("notesPath"));
 
         modelAndView.addObject("folder", folder.getChildFolder());
         modelAndView.addObject("files", folder.getChildFile());

@@ -1,13 +1,16 @@
 package com.snakefeather.filemanager.domain;
 
 import com.snakefeather.filemanager.domain.md.MdTextCode;
+import com.snakefeather.filemanager.domain.md.PhotoMsg;
 import com.snakefeather.filemanager.file.FileOperation;
 
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 
 /**
@@ -41,9 +44,10 @@ public class FileTextList extends LinkedList<TextDiv> {
         setFileId();        //  计算文件ID
     }
 
-    public void read(){
+    public void read() {
         read(path.toString());
     }
+
     public void read(String fileName) {
         // 用于处理代码块的临时变量
         MdTextCode codePiece = null;
@@ -59,10 +63,10 @@ public class FileTextList extends LinkedList<TextDiv> {
                 if (str.matches("```.*")) {
                     //  代码块开头   初始化代码块对象
                     codePiece = new MdTextCode(path, lineCount++, str);
-                    while( (str = reader.readLine())!=null){
+                    while ((str = reader.readLine()) != null) {
                         codePiece.add(str);
                         lineCount++;
-                        if (str.matches("```.*")){
+                        if (str.matches("```.*")) {
                             break;
                         }
                     }
@@ -94,6 +98,18 @@ public class FileTextList extends LinkedList<TextDiv> {
             return false;
         }
         return true;
+    }
+
+    public Map<String, PhotoMsg> getAllPhotoMsp() {
+        Map<String, PhotoMsg> msgMap = new HashMap<>();
+        for (TextDiv textDiv : this) {
+            if (textDiv.getTextType() == TextDiv.MsgTypeEnum.IMG
+                    || textDiv.getTextType() == TextDiv.MsgTypeEnum.LABEL_PHOTO) {
+                PhotoMsg photoMsg = (PhotoMsg) textDiv;
+                msgMap.put(photoMsg.getPhotoName(), photoMsg);
+            }
+        }
+        return msgMap;
     }
 
     // 文本分类

@@ -17,6 +17,8 @@ public class MdTextLabelPhoto extends TextDiv implements PhotoMsg {
     //   备注  remark
     private String alt = null;
 
+    public MdTextLabelPhoto() {
+    }
 
     public MdTextLabelPhoto(PathType pathType, String folderPath, String fileName, String altStr) {
         super(null, -1, null, MsgTypeEnum.LABEL_PHOTO);     //  创建临时的TextDiv对象。

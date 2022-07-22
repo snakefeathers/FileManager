@@ -3,13 +3,13 @@ package com.snakefeather.filemanager.service.impl;
 import com.snakefeather.filemanager.domain.DataCenter;
 import com.snakefeather.filemanager.domain.FileTextList;
 import com.snakefeather.filemanager.domain.TextDiv;
-import com.snakefeather.filemanager.domain.md.MdTextImg;
 import com.snakefeather.filemanager.domain.md.PhotoMsg;
 import com.snakefeather.filemanager.domain.md.PhotoMsgs;
 import com.snakefeather.filemanager.file.FileOperation;
 import com.snakefeather.filemanager.file.FolderOperation;
 import com.snakefeather.filemanager.regex.RegexStore;
 import com.snakefeather.filemanager.service.MarkdownService;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -29,6 +28,8 @@ import java.util.stream.Collectors;
  */
 public class MarkdownServiceImpl implements MarkdownService {
 
+
+    private Logger logger = Logger.getLogger(this.getClass().getName());
 
     //  变量   代码块flog值   getPhotoUrlMap()中lambda表达式使用，用于跳过代码块
     private boolean isCodeChunk = false;
@@ -87,6 +88,12 @@ public class MarkdownServiceImpl implements MarkdownService {
                                 stringBuilder.append(str + "\n");
                             }
                         }
+                        //  问题：
+//                        String photoUrl = "![img](photos/wps1108.jpg)![img](photos/wps1109.png)";
+//                        结果：
+//                        ![String photoUrl = "
+//                        ![img](photos/wps1108.jpg)
+//                        ![img](photos/wps1109.png)";
                         return stringBuilder.toString();
                     } else {
                         return textLine;
@@ -153,7 +160,6 @@ public class MarkdownServiceImpl implements MarkdownService {
         return urlMap;
     }
 
-
     @Override
     public Map<String, PhotoMsg> getAllPhotoMsgMap(String folderPath) throws IOException {
         disposeAllPhotoUrl(folderPath);
@@ -174,15 +180,14 @@ public class MarkdownServiceImpl implements MarkdownService {
         for (FileTextList fileList : fileLists) {
             fileList.read();
             // 筛选出 PhotoMsg类性
-            fileList.stream().filter(textDiv ->
-                    textDiv.getTextType() == TextDiv.MsgTypeEnum.IMG || textDiv.getTextType() == TextDiv.MsgTypeEnum.LABEL_PHOTO
-            ).forEach(new Consumer<TextDiv>() {
-                @Override
-                public void accept(TextDiv textDiv) {
-                    // 添加
-                    PhotoMsg photoMsg = (PhotoMsg) textDiv;
-                    photoMap.put(photoMsg.getPhotoName(), photoMsg);
-                }
+            Map<String , PhotoMsg> msgMap = fileList.getAllPhotoMsp();
+            msgMap.forEach((key,value)->{
+                photoMap.merge(key,value,new BiFunction(){
+                    @Override
+                    public Object apply(Object o, Object o2) {
+                        return o;
+                    }
+                });
             });
         }
         return photoMap;
@@ -212,6 +217,31 @@ public class MarkdownServiceImpl implements MarkdownService {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            logger.warn("MarkdownService | surplusPhotos : IO异常。文件夹路径："+folderPath + "\t图片路径:"+photoFolderPath);
+        }
+        DataCenter.writePhotoPath(surplusFileMap);
+        return surplusFileMap;
+    }
+
+    @Override
+    public Map<String, Path> surplusPhotosRW(List<FileTextList> fileLists, String photoFolderPath) {
+        // 冗余的图片隐射  Map<图片名，绝对路径>
+        Map<String, Path> surplusFileMap = new HashMap<>();
+        try {
+            //  实际存在的图片 Map<图片名，绝对地址>
+            Map<String, Path> photoMap = FolderOperation.getAllFileBySuffix(photoFolderPath, RegexStore.PHOTO);
+            // 所有Md文件中扫出来的，需要的图片。
+            Set<String> photoSet = getAllPhotoMsgMspRW(fileLists).keySet();
+
+            for (String photoName : photoMap.keySet()) {
+                if (!photoSet.contains(photoName)) {
+                    // 没有需要该图片的链接，该图片 多余 // 多余的图片  //  记录
+                    surplusFileMap.put(photoName, photoMap.get(photoName));
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return surplusFileMap;
     }
@@ -238,6 +268,7 @@ public class MarkdownServiceImpl implements MarkdownService {
                 lackUrlMap.put(photoName, urlMap.get(photoName));
             }
         }
+        DataCenter.writePhotoMsg(lackUrlMap.values());
         return lackUrlMap;
     }
 
@@ -269,8 +300,13 @@ public class MarkdownServiceImpl implements MarkdownService {
     //#region  移出 多余的图片  多余的链接 多余的链接（批量操作）
     @Override
     public boolean removeInvalidImages(String targetPath, String mirrorPath) {
-        Map<String, Path> surplusPhotoMap = surplusPhotos(targetPath, targetPath);
-        for (Path photoPath : surplusPhotoMap.values()) {
+        Map<String, Path> photoMap = DataCenter.readPhotoPathByFile();
+//        List<String> list = DataCenter.readPhotoMsgByFile();
+        if (photoMap.size() == 0) {
+            surplusPhotos(targetPath, targetPath);
+            photoMap = DataCenter.readPhotoPathByFile();
+        }
+        for (Path photoPath : photoMap.values()) {
             // 复制文件
 //            FileOperation.copyFile(photoPath.toString(), mirrorPath);
 //            File file = photoPath.toFile();
@@ -284,10 +320,23 @@ public class MarkdownServiceImpl implements MarkdownService {
 
     @Override
     public boolean removeAllInvalidPhotoMsg(List<FileTextList> fileLists, String photoPath) {
-        Map<String, PhotoMsg> invalidMap = surplusPhotoMsgRW(fileLists, photoPath);
-        for (PhotoMsg photoMsg : invalidMap.values()) {
-            TextDiv textDiv = (TextDiv) photoMsg;
-            textDiv.setOriginalText("");
+        List<String> list = DataCenter.readPhotoMsgByFile();
+        if (list.size() == 0){
+            surplusPhotoMsgRW(fileLists,photoPath);
+            list = DataCenter.readPhotoMsgByFile();
+        }
+        Map<String,PhotoMsg> photoMsgMap = getAllPhotoMsgMspRW(fileLists);
+        //  没有要修改的
+        if (list.size() == 0) return true;
+
+        for (String photoName : list) {
+            PhotoMsg photoMsg = photoMsgMap.get(photoName);
+            if (null != photoMsg){
+                TextDiv textDiv = (TextDiv)photoMsg;
+                textDiv.setOriginalText("");
+            }else {
+                System.out.println("异常：缺少对应的图片链接。 图片名："+photoName);
+            }
         }
         for (FileTextList fileList : fileLists) {
             fileList.write();

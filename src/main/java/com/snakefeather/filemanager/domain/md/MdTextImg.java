@@ -34,6 +34,9 @@ public class MdTextImg extends TextDiv implements PhotoMsg {
         super(filePath, lineNumber, originalText, textType);
     }
 
+    public MdTextImg() {
+    }
+
     /**
      * 结合merger()方法使用。
      *
@@ -50,7 +53,7 @@ public class MdTextImg extends TextDiv implements PhotoMsg {
         this.remark = remark;
     }
 
-   @Override
+    @Override
     public void decorate(TextDiv textDiv) {
         this.filePath = textDiv.getFilePath();
         this.lineNumber = textDiv.getLineNumber();
@@ -140,8 +143,6 @@ public class MdTextImg extends TextDiv implements PhotoMsg {
     public void setPathType(PathType pathType) {
         this.pathType = pathType;
     }
-
-
 
 
 }

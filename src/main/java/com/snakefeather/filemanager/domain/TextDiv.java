@@ -36,6 +36,9 @@ public  class TextDiv {
 
     //#endregion
 
+    public TextDiv() {
+    }
+
     public TextDiv(Path filePath, long lineNumber, String originalText, MsgTypeEnum textType) {
         this.filePath = filePath;
         this.lineNumber = lineNumber;

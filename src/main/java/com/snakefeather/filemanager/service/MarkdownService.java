@@ -17,7 +17,8 @@ public interface MarkdownService {
 
 
     /**
-     *  读取文件夹 获取到所有的 md文件的映射
+     * 读取文件夹 获取到所有的 md文件的映射
+     *
      * @param folderPath
      * @return
      */
@@ -36,7 +37,7 @@ public interface MarkdownService {
     Map<String, PhotoMsg> getPhotoMsgMap(String filePath) throws IOException;
 
     /**
-     * 获取文件夹下的 所有文件 里的 图片链接 （只读操作）
+     * 获取文件夹下的 所有文件 里的 图片链接 （只读操作）(读写操作)
      * 传入一个文件夹，扫描所有MD文件，获取所有的URL地址。
      *
      * @param folderPath
@@ -44,20 +45,11 @@ public interface MarkdownService {
      * @throws IOException
      */
     Map<String, PhotoMsg> getAllPhotoMsgMap(String folderPath) throws IOException;
-
-    /**
-     *   获取文件里的图片链接  （读写操作）
-     *   根据自定义的File类型，获取其中所有的 PhotoMsg对象
-     * @param fileLists
-     * @return
-     */
-    Map<String,PhotoMsg> getAllPhotoMsgMspRW(List<FileTextList> fileLists);
-
-
+    Map<String, PhotoMsg> getAllPhotoMsgMspRW(List<FileTextList> fileLists);
 
 
     /**
-     * 返回实际多余的图片
+     * 返回实际多余的图片        （只读操作）(读写操作)
      * 比对图片链接：传入MD文件读取到的图片链接和实际拥有的图片，返回实际多余的图片。（排除无效图片）
      * 文件夹中的多个文件使用。
      *
@@ -66,10 +58,11 @@ public interface MarkdownService {
      * @return 多余的图片的Map  Map<图片名，绝对路径>
      * @throws IOException
      */
-    Map<String, Path> surplusPhotos(String folderPath, String photoFolderPath) ;
+    Map<String, Path> surplusPhotos(String folderPath, String photoFolderPath);
+    Map<String, Path> surplusPhotosRW(List<FileTextList> fileLists, String photoFolderPath);
 
     /**
-     * 返回多余的图片链接   反过来就是  返回缺少的图片
+     * 返回多余的图片链接   反过来就是  返回缺少的图片 （只读操作）(读写操作)
      * 找出指定文件夹下所有md文件中，匹配无效的图片链接。 即，有链接，缺少图片。
      *
      * @param folderPath      md文件的文件夹
@@ -78,12 +71,6 @@ public interface MarkdownService {
      * @throws IOException
      */
     Map<String, PhotoMsg> surplusPhotoMsg(String folderPath, String photoFolderPath);
-
-    /**
-     *  返回多余的图片链接 （读写操作）
-     * @param fileLists
-     * @return
-     */
     Map<String, PhotoMsg> surplusPhotoMsgRW(List<FileTextList> fileLists, String photoFolderPath);
 
 
@@ -99,7 +86,8 @@ public interface MarkdownService {
     boolean removeInvalidImages(String targetPath, String mirrorPath) throws IOException;
 
     /**
-     *  移出多余的链接 （批量操作）
+     * 移出多余的链接 （批量操作）
+     *
      * @param fileLists 目标md文件
      * @param photoPath 图片文件夹
      * @return
@@ -118,18 +106,20 @@ public interface MarkdownService {
     void updatePhotoPathByFile(String fileName, String photoPath);
 
     /**
-     *  关联指定链接和图片
+     * 关联指定链接和图片
+     *
      * @param photoMsg  图片链接
-     * @param photoPath  图片具体路径
+     * @param photoPath 图片具体路径
      */
-    void relevancyUrlAndPhoto(PhotoMsg photoMsg,Path photoPath);
+    void relevancyUrlAndPhoto(PhotoMsg photoMsg, Path photoPath);
 
     /**
      * 补充图片
-     * @param folder        指定md文件目录
-     * @param targetPath    图片目标路径
-     * @param photoPaths    图片来源路径
+     *
+     * @param folder     指定md文件目录
+     * @param targetPath 图片目标路径
+     * @param photoPaths 图片来源路径
      * @return
      */
-    Map<String,PhotoMsg> replenishPhoto(String folder,String targetPath,String... photoPaths);
+    Map<String, PhotoMsg> replenishPhoto(String folder, String targetPath, String... photoPaths);
 }
